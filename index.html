@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Говорящий аватар (Прозрачный)</title>
+    <title>Говорящий аватар (Адаптивный + Робот)</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -61,7 +61,7 @@
             align-items: center; 
         }
 
-        /* Preview Area - теперь с шашечками для имитации прозрачности */
+        /* Preview Box */
         #preview-box {
             display: flex;
             justify-content: center;
@@ -80,15 +80,15 @@
             padding: 10px;
             box-sizing: border-box;
             width: 100%;
-            min-height: 400px;
+            height: 400px; /* Фиксированная высота для теста адаптивности */
         }
 
         .preview-content {
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            gap: 10px; /* Уменьшил отступ, так как добавились волны */
+            justify-content: center; /* Центрируем по вертикали */
+            gap: 2%; /* Относительный отступ */
             width: 100%;
             height: 100%;
         }
@@ -101,9 +101,11 @@
             justify-content: center;
             align-items: center;
             transition: all 0.3s ease;
-            width: 200px;
-            height: 200px;
-            /* Важно: фон применяется только к кругу */
+            
+            /* Адаптивные размеры для превью */
+            height: 60%; 
+            aspect-ratio: 1 / 1; 
+            
             background-clip: padding-box;
         }
 
@@ -128,8 +130,9 @@
             align-items: center;
             justify-content: center;
             gap: 4px;
-            height: 30px;
-            opacity: 0.3; /* Тусклые когда пауза */
+            height: 10%; /* Относительная высота */
+            min-height: 20px;
+            opacity: 0.3;
             transition: opacity 0.3s;
         }
         .sound-waves.active {
@@ -147,16 +150,17 @@
         }
         
         @keyframes sound-jump {
-            0%, 100% { height: 5px; }
-            50% { height: 25px; }
+            0%, 100% { height: 20%; }
+            50% { height: 100%; }
         }
 
         .controls-row {
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 20px;
-            flex-shrink: 0;
-            margin-top: 5px; 
+            height: 15%; /* Относительная высота */
+            width: 100%;
         }
 
         .c-btn {
@@ -169,6 +173,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            height: 100%;
+            aspect-ratio: 1/1;
         }
 
         .c-btn:hover {
@@ -177,28 +183,29 @@
         }
 
         .play-big {
-            width: 60px;
-            height: 60px;
+            height: 100%;
+            aspect-ratio: 1/1;
             border-radius: 50%;
             background: linear-gradient(135deg, #a960ec, #f72585);
             box-shadow: 0 5px 20px rgba(247, 37, 133, 0.4);
             display: flex;
             align-items: center;
             justify-content: center;
+            max-height: 60px; /* Ограничение чтобы не раздуло */
         }
 
         .play-big svg {
-            width: 30px;
-            height: 30px;
+            width: 50%;
+            height: 50%;
             fill: white;
             margin-left: 4px;
         }
 
         .arrow-btn svg {
-            width: 30px;
-            height: 30px;
+            width: 60%;
+            height: 60%;
             fill: white;
-            filter: drop-shadow(0 0 3px rgba(0,0,0,0.5)); /* Тень чтобы видеть на светлом фоне */
+            filter: drop-shadow(0 0 3px rgba(0,0,0,0.5));
         }
 
         /* Inputs */
@@ -312,11 +319,11 @@
     <div class="editor-layout">
         <!-- Preview Column -->
         <div class="col">
-            <h3 style="text-align:center">Предпросмотр (Прозрачный фон)</h3>
+            <h3 style="text-align:center">Предпросмотр (Меняйте размер браузера)</h3>
             <div id="preview-box">
                 <div class="preview-content">
                     <div class="ring-container" id="prev-ring">
-                        <span class="placeholder-text" id="prev-placeholder">Нет фото</span>
+                        <span class="placeholder-text" id="prev-placeholder">Загрузите<br>аватар</span>
                         <img id="prev-img" class="avatar-img">
                     </div>
                     
@@ -336,6 +343,10 @@
                     </div>
                 </div>
             </div>
+            <p style="font-size:0.8rem; color:#888; text-align:center; margin-top:10px">
+                В редакторе показывается загруженное фото сразу.<br>
+                На слайде Genially будет Робот, пока не нажмут Play.
+            </p>
         </div>
 
         <!-- Settings Column -->
@@ -343,7 +354,7 @@
             <h3 style="text-align:center">Настройки</h3>
             
             <label class="custom-file">
-                <span id="img-name">📂 Загрузить Картинку</span>
+                <span id="img-name">📂 Загрузить Картинку Аватара</span>
                 <input type="file" id="inp-img" accept="image/*" class="file-input">
             </label>
 
@@ -352,8 +363,8 @@
                 <input type="file" id="inp-aud" accept="audio/*,video/mp4" class="file-input">
             </label>
 
-            <span class="label-text">Размер аватара:</span>
-            <input type="range" id="rng-size" min="30" max="85" value="65" style="width:100%">
+            <span class="label-text">Размер аватара (внутри рамки):</span>
+            <input type="range" id="rng-size" min="30" max="80" value="60" style="width:100%">
 
             <span class="label-text">Цвет свечения и волн:</span>
             <input type="color" id="inp-color" value="#F72585">
@@ -364,7 +375,7 @@
             <span class="label-text">Цвет кнопки Play:</span>
             <input type="color" id="inp-btn-color" value="#F72585">
 
-            <span class="label-text">Цвет фона КРУГА (остальное прозрачное):</span>
+            <span class="label-text">Цвет фона КРУГА:</span>
             <input type="color" id="inp-bg-color" value="#120C1C">
 
             <span class="label-text">Цвет рамки КРУГА:</span>
@@ -387,7 +398,7 @@
         prevImg: document.getElementById('prev-img'),
         prevPlace: document.getElementById('prev-placeholder'),
         prevRing: document.getElementById('prev-ring'),
-        prevWaves: document.getElementById('prev-waves'), // Волны
+        prevWaves: document.getElementById('prev-waves'),
         prevBox: document.getElementById('preview-box'), 
         audio: document.getElementById('main-audio'),
         btnPlay: document.getElementById('prev-b-play'),
@@ -437,16 +448,14 @@
         const color = els.color.value;
         const bColor = els.btnColor.value;
         const glowSize = els.glow.value;
-        const sizeVal = els.size.value;
+        const sizeVal = els.size.value; // Это проценты
         const bordColor = els.borderColor.value;
         const bgColor = els.bgColor.value;
         
-        // Размеры
-        const pxSize = (sizeVal / 100) * 350; 
-        els.prevRing.style.width = pxSize + 'px';
-        els.prevRing.style.height = pxSize + 'px';
+        // В превью мы просто меняем высоту в процентах
+        els.prevRing.style.height = sizeVal + '%';
 
-        // Применяем цвета только к кругу (ring), а не к коробке
+        // Применяем цвета
         els.prevRing.style.boxShadow = `0 0 ${glowSize}px ${color}, inset 0 0 ${glowSize/2}px ${color}`;
         els.prevRing.style.borderColor = bordColor;
         els.prevRing.style.backgroundColor = bgColor;
@@ -469,12 +478,12 @@
 
     els.audio.onplay = () => {
         els.btnPlay.innerHTML = iconPause;
-        els.prevWaves.classList.add('active'); // Включаем волны
+        els.prevWaves.classList.add('active');
         updatePreview();
     };
     els.audio.onpause = () => {
         els.btnPlay.innerHTML = iconPlay;
-        els.prevWaves.classList.remove('active'); // Выключаем волны
+        els.prevWaves.classList.remove('active');
         updatePreview();
     };
     els.audio.onended = () => {
@@ -487,6 +496,9 @@
     
     updatePreview();
 
+    // Иконка робота в формате DataURL для вставки в код
+    const robotIcon = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23cccccc'%3E%3Cpath d='M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2M7.5 13a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5m9 0a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5'/%3E%3C/svg%3E";
+
     const generateHTML = () => {
         if(!state.img || !state.audio) {
             alert("Загрузите картинку и аудио!");
@@ -496,7 +508,7 @@
         const color = els.color.value;
         const bColor = els.btnColor.value;
         const glowSize = els.glow.value;
-        const sizeVal = els.size.value;
+        const sizeVal = els.size.value; // Проценты!
         const bordColor = els.borderColor.value;
         const bgColor = els.bgColor.value;
         
@@ -516,26 +528,22 @@
     #${uid} {
         width: 100%;
         height: 100%;
-        
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
         font-family: sans-serif;
         box-sizing: border-box;
-        /* Фон полностью прозрачный, убрали border и padding внешнего контейнера */
         background: transparent;
     }
     
+    /* Контейнер круга: высота в % от родителя */
     #${uid} .ring {
         position: relative;
-        width: ${sizeVal}vmin; 
-        height: ${sizeVal}vmin;
-        max-width: 80vmin;
-        max-height: 80vmin;
+        height: ${sizeVal}%; 
+        aspect-ratio: 1 / 1;
         
         border-radius: 50%;
-        /* Настройки применяются только к кругу */
         border: 2px solid ${bordColor};
         background-color: ${bgColor};
 
@@ -544,7 +552,7 @@
         align-items: center;
         transition: all 0.4s ease;
         cursor: pointer;
-        flex-shrink: 0;
+        flex-shrink: 1; /* Разрешаем сжиматься, если места мало */
         z-index: 2;
     }
     
@@ -562,16 +570,18 @@
         pointer-events: none;
     }
 
-    /* Sound Waves */
+    /* Волны */
     #${uid} .waves-container {
-        height: 40px;
+        height: 10%;
+        min-height: 15px;
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 6px;
-        margin: 5px 0;
+        gap: 4px;
+        margin: 1% 0;
         opacity: 0;
         transition: opacity 0.3s;
+        flex-shrink: 0;
     }
     #${uid} .waves-container.active {
         opacity: 1;
@@ -579,7 +589,7 @@
     
     #${uid} .bar {
         width: 6px;
-        height: 5px;
+        height: 20%;
         background-color: ${color};
         border-radius: 10px;
     }
@@ -589,16 +599,19 @@
     }
     
     @keyframes waveAnim {
-        0%, 100% { height: 5px; }
-        50% { height: 30px; }
+        0%, 100% { height: 20%; }
+        50% { height: 100%; }
     }
 
+    /* Контролы */
     #${uid} .controls {
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 25px;
+        gap: 15px;
         width: 100%;
+        height: 15%; /* Относительная высота для кнопок */
+        min-height: 40px;
         z-index: 2;
         flex-shrink: 0;
     }
@@ -613,30 +626,31 @@
         justify-content: center;
         transition: transform 0.2s;
         -webkit-tap-highlight-color: transparent;
+        height: 100%;
+        aspect-ratio: 1/1;
     }
     #${uid} button:hover { transform: scale(1.1); }
     #${uid} button:active { transform: scale(0.95); }
 
     #${uid} .btn-play {
-        width: 50px;
-        height: 50px;
         border-radius: 50%;
         background: ${bColor};
         box-shadow: 0 4px 15px ${bColor}80;
+        max-height: 60px; /* Чтобы не стали гигантскими */
     }
     #${uid} .btn-play svg {
-        width: 24px;
-        height: 24px;
+        width: 50%;
+        height: 50%;
         fill: white;
     }
     #${uid} .btn-play svg.is-play { margin-left: 3px; }
 
     #${uid} .btn-arrow svg {
-        width: 28px;
-        height: 28px;
+        width: 70%;
+        height: 70%;
         fill: white;
         opacity: 0.8;
-        filter: drop-shadow(0 0 4px rgba(0,0,0,0.7)); /* Тень для видимости на белом фоне */
+        filter: drop-shadow(0 0 4px rgba(0,0,0,0.7));
     }
     #${uid} .btn-arrow:hover svg { opacity: 1; }
 
@@ -644,7 +658,8 @@
 
 <div id="${uid}">
     <div class="ring">
-        <img class="avatar" src="${state.img}">
+        <!-- Сюда подставится робот по умолчанию, потом заменится скриптом -->
+        <img class="avatar" id="avatar-${uid}" src="${robotIcon}">
     </div>
     
     <div class="waves-container" id="waves-${uid}">
@@ -670,9 +685,12 @@
 
 <script>
     (function() {
+        var userImageSrc = "${state.img}"; // Сюда подставляется ваше фото
+        
         var root = document.getElementById('${uid}');
         var audio = document.getElementById('audio-${uid}');
         var ring = root.querySelector('.ring');
+        var avatarImg = document.getElementById('avatar-${uid}');
         var waves = document.getElementById('waves-${uid}');
         var playBtn = document.getElementById('play-${uid}');
         var prevBtn = document.getElementById('prev-${uid}');
@@ -681,9 +699,19 @@
         var svgPlay = '<svg class="is-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
         var svgPause = '<svg viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
 
+        var hasStarted = false;
+
         function toggle() {
-            if(audio.paused) audio.play();
-            else audio.pause();
+            if(audio.paused) {
+                // ПЕРВЫЙ ЗАПУСК: Меняем робота на фото пользователя
+                if(!hasStarted) {
+                    avatarImg.src = userImageSrc;
+                    hasStarted = true;
+                }
+                audio.play();
+            } else {
+                audio.pause();
+            }
         }
 
         playBtn.onclick = toggle;
