@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Конструктор Квиза (Media + Sound Fix)</title>
+    <title>Конструктор Квиза (Fixed Media)</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root { --bg: #120C1C; --surface: #1E1234; --primary: #A450F3; --accent: #F72585; --text: #EAE2FF; --border: #3A2E59; --input-bg: #0b0711; --danger: #ff4757; --success: #2ecc71; }
@@ -42,7 +42,7 @@
         .message { display: flex; align-items: flex-end; gap: 8px; max-width: 90%; }
         .msg-avatar { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
         
-        .bubble-cont { display: flex; flex-direction: column; gap: 5px; max-width: 100%; }
+        .bubble-cont { display: flex; flex-direction: column; gap: 6px; max-width: 100%; }
         .bubble { padding: 10px 14px; border-radius: 18px; font-size: 0.9rem; line-height: 1.4; word-wrap: break-word; }
         .msg-bot { align-self: flex-start; }
         .msg-bot .bubble { background: rgba(255,255,255,0.1); border-bottom-left-radius: 2px; }
@@ -50,9 +50,9 @@
         .msg-user .bubble { background: var(--accent); color: white; border-bottom-right-radius: 2px; }
         
         /* Media inside chat */
-        .chat-media { border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,0.2); margin-top: 5px; }
+        .chat-media { border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,0.2); max-width: 250px; }
         .chat-media img { width: 100%; height: auto; display: block; }
-        .chat-audio { width: 100%; height: 30px; margin-top: 5px; }
+        .chat-audio { width: 200px; height: 35px; }
 
         /* Options Buttons */
         .opt-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 5px; margin-left: 36px; }
@@ -83,7 +83,7 @@
         .q-del { background: var(--danger); border: none; color: white; width: 24px; height: 24px; border-radius: 50%; cursor: pointer; display: flex; justify-content: center; align-items: center; }
         
         .q-media-bar { display: flex; gap: 10px; margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); }
-        .media-btn { flex: 1; position: relative; background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 6px; color: #aaa; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; padding: 8px; transition: 0.2s; }
+        .media-btn { flex: 1; position: relative; background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 6px; color: #aaa; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; padding: 8px; transition: 0.2s; font-size: 0.85rem; }
         .media-btn:hover { background: rgba(255,255,255,0.05); }
         .media-btn.active { border-color: var(--success); color: var(--success); background: rgba(46, 204, 113, 0.1); }
         
@@ -184,13 +184,10 @@
     const defBot = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23cccccc'%3E%3Cpath d='M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2'/%3E%3C/svg%3E";
     const defUser = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23888888'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E";
 
-    // RELIABLE BASE64 SOUNDS
-    // 1. Send/Typewriter (Short Mechanical click)
-    const sType = "data:audio/wav;base64,UklGRi4AAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAACAgEBAQAAAA==";
-    // 2. Click (Button press)
-    const sClick = "data:audio/wav;base64,UklGRjIAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoAAACAAAAAgAAAAAA=";
-    // 3. Receive (Ping)
-    const sPing = "data:audio/mp3;base64,//uQZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWgAAAA0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABMmYXbWxpbmUAbXAzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//uQZAAP8AAAaQAAAAgAAA0gAAABAAABpAAAACAAADSAAAAEqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq";
+    // BASE64 SOUNDS
+    const sType = "data:audio/wav;base64,UklGRi4AAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAACAgEBAQAAAA=="; // Placeholder click
+    const sClick = "data:audio/wav;base64,UklGRjIAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoAAACAAAAAgAAAAAA="; // Placeholder click
+    const sPing = "data:audio/mp3;base64,//uQZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWgAAAA0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABMmYXbWxpbmUAbXAzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq"; // Placeholder ping
 
     let state = {
         avatar: defBot,
@@ -324,7 +321,7 @@
         const r = new FileReader();
         r.onload = v => {
             state.quests[idx][type] = v.target.result;
-            renderQuests(); // Update UI to show active state
+            renderQuests(); 
         };
         r.readAsDataURL(file);
     };
@@ -346,8 +343,7 @@
     els.prevRing.src = state.avatar;
     els.prevHead.src = state.avatar;
 
-    // --- PREVIEW SIMULATION ---
-    // Helper to play preview sounds
+    // --- PREVIEW LOGIC ---
     function playPrevSound(type) {
         const a = type===1 ? els.auClick : (type===2 ? els.auPing : els.auType);
         a.currentTime = 0;
@@ -358,7 +354,7 @@
         state.chatOpen = !state.chatOpen;
         if(state.chatOpen) {
             els.chatWin.classList.add('open');
-            playPrevSound(1); // Click sound
+            playPrevSound(1);
             startSim();
         } else {
             els.chatWin.classList.remove('open');
@@ -372,7 +368,6 @@
         state.gameActive = true;
         clearInterval(state.interval);
         
-        // Timer
         if(els.tmrOn.checked) {
             els.tmrDisplay.style.display = 'block';
             state.timerVal = parseInt(els.tmrMin.value) * 60;
@@ -410,6 +405,7 @@
         }
 
         const q = state.quests[state.qIndex];
+        // Pass media to addMsg
         addMsg('bot', q.q, q.img, q.aud);
         
         if(q.type === 'choice') {
@@ -438,10 +434,9 @@
     function handleAns(ans) {
         if(!state.gameActive) return;
         
-        playPrevSound(3); // Typewriter sound
+        playPrevSound(3); 
         addMsg('user', ans);
         
-        // Remove old buttons
         const old = els.msgs.querySelectorAll('.opt-row');
         old.forEach(b => b.remove());
 
@@ -458,7 +453,7 @@
     }
 
     function addMsg(role, txt, img, aud) {
-        if(role === 'bot') playPrevSound(2); // Ping
+        if(role === 'bot') playPrevSound(2);
 
         const d = document.createElement('div'); d.className=`message msg-${role}`;
         const im = document.createElement('img'); im.className='msg-avatar'; im.src = role==='bot'?state.avatar:defUser;
@@ -470,6 +465,7 @@
         b.innerText = txt;
         cont.appendChild(b);
 
+        // Display Media in Preview
         if(img) {
             const md = document.createElement('div'); md.className='chat-media';
             md.innerHTML = `<img src="${img}">`;
@@ -511,7 +507,6 @@
             time: parseInt(els.tmrMin.value) * 60,
             win: els.msgWin.value,
             lose: els.msgLose.value,
-            // sounds
             sClick: sClick, sPing: sPing, sType: sType
         };
 
@@ -669,10 +664,4 @@
 </script>
 </body>
 </html>
-        
-          
-            
-   
-        
-  
-
+                   
