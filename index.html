@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Говорящий аватар: Конструктор Квиза</title>
+    <title>Конструктор Квиза (Исправленный)</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root { --bg: #120C1C; --surface: #1E1234; --primary: #A450F3; --accent: #F72585; --text: #EAE2FF; --border: #3A2E59; --input-bg: #0b0711; --danger: #ff4757; }
@@ -116,7 +116,7 @@
                     </div>
                 </div>
             </div>
-            <p style="text-align:center; color:#888; font-size:0.9rem; margin-top:5px;">Нажмите на круг, чтобы начать тест.</p>
+            <p style="text-align:center; color:#888; font-size:0.9rem; margin-top:5px;">Нажмите на круг, чтобы проверить игру.</p>
         </div>
 
         <!-- EDITOR -->
@@ -143,9 +143,7 @@
             </div>
 
             <span class="section-title">3. Список Вопросов</span>
-            <div id="quest-container">
-                <!-- Dynamic Questions -->
-            </div>
+            <div id="quest-container"></div>
             <button class="add-btn" onclick="addQuest()">+ Добавить вопрос</button>
 
             <span class="section-title">4. Сообщения Финала</span>
@@ -165,29 +163,29 @@
 </div>
 
 <script>
-    // --- DATA ---
+    // --- DATA & STATE ---
     const defBot = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23cccccc'%3E%3Cpath d='M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2'/%3E%3C/svg%3E";
     const defUser = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23888888'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E";
 
+    // Sounds (Base64) - Standardized
+    const sClick = "data:audio/wav;base64,UklGRi4AAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAACAgEBAQAAAA=="; 
+    const sPing = "data:audio/wav;base64,UklGRjQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQcAAAAAAP8A/wD/AP8A/wD/AP8AAA==";
+    const sType = "data:audio/wav;base64,UklGRlIAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoAAACAAAAAgAAAAACAAAAAgAAAAICAAIAAgIDAwMDA3t7e3qCgoKDf39/fAA==";
+
     let state = {
         avatar: defBot,
-        accent: "#F72585",
         quests: [
             { type: 'text', q: 'Сколько будет 2+2?', a: '4', opts: '' },
             { type: 'choice', q: 'Столица Франции?', a: 'Париж', opts: 'Лондон,Париж,Берлин' }
         ],
-        timerEnabled: false,
-        timerMin: 5,
-        msgWin: "Молодец! Ты прошел испытание.",
-        msgLose: "Игра окончена. Попробуй еще раз.",
-        
-        // Sim state
         chatOpen: false,
-        currentQIndex: 0,
-        gameActive: false
+        gameActive: false,
+        qIndex: 0,
+        timerVal: 300,
+        interval: null
     };
 
-    // --- UI ELEMENTS ---
+    // --- DOM ELEMENTS ---
     const els = {
         questCont: document.getElementById('quest-container'),
         imgInp: document.getElementById('inp-img'),
@@ -205,64 +203,54 @@
         msgWin: document.getElementById('inp-win'),
         msgLose: document.getElementById('inp-lose'),
         code: document.getElementById('output-code'),
-        copy: document.getElementById('btn-copy')
+        copy: document.getElementById('btn-copy'),
+        label: document.getElementById('label-img')
     };
 
-    // --- RENDER EDITOR ---
+    // --- EDITOR LOGIC ---
     function renderQuests() {
         els.questCont.innerHTML = '';
         state.quests.forEach((q, i) => {
-            const card = document.createElement('div');
-            card.className = 'q-card';
+            const card = document.createElement('div'); card.className = 'q-card';
             
             // Header
-            const head = document.createElement('div');
-            head.className = 'q-header';
+            const head = document.createElement('div'); head.className = 'q-header';
             head.innerHTML = `<span class="q-type">${q.type === 'text' ? '✍️ Текст' : '🔘 Выбор'}</span>`;
-            const delBtn = document.createElement('button');
-            delBtn.className = 'q-del';
-            delBtn.innerHTML = '×';
-            delBtn.onclick = () => removeQuest(i);
+            const delBtn = document.createElement('button'); delBtn.className = 'q-del';
+            delBtn.innerHTML = '×'; delBtn.onclick = () => { state.quests.splice(i, 1); renderQuests(); };
             head.appendChild(delBtn);
             card.appendChild(head);
 
-            // Type Select
+            // Type
             const typeGrp = mkInpGroup('Тип вопроса:');
-            const sel = document.createElement('select');
-            sel.className = 'q-inp';
+            const sel = document.createElement('select'); sel.className = 'q-inp';
             sel.innerHTML = `<option value="text">Ввод текста</option><option value="choice">Выбор кнопок</option>`;
             sel.value = q.type;
-            sel.onchange = (e) => updateQuest(i, 'type', e.target.value);
+            sel.onchange = (e) => { state.quests[i].type = e.target.value; renderQuests(); };
             typeGrp.appendChild(sel);
             card.appendChild(typeGrp);
 
             // Question
             const qGrp = mkInpGroup('Текст вопроса:');
-            const inpQ = document.createElement('input');
-            inpQ.className = 'q-inp';
-            inpQ.value = q.q;
-            inpQ.oninput = (e) => updateQuest(i, 'q', e.target.value);
+            const inpQ = document.createElement('input'); inpQ.className = 'q-inp';
+            inpQ.value = q.q; inpQ.oninput = (e) => state.quests[i].q = e.target.value;
             qGrp.appendChild(inpQ);
             card.appendChild(qGrp);
 
-            // Options (only if choice)
+            // Options (if choice)
             if (q.type === 'choice') {
                 const oGrp = mkInpGroup('Варианты (через запятую):');
-                const inpO = document.createElement('input');
-                inpO.className = 'q-inp';
-                inpO.value = q.opts;
-                inpO.placeholder = "Да,Нет,Возможно";
-                inpO.oninput = (e) => updateQuest(i, 'opts', e.target.value);
+                const inpO = document.createElement('input'); inpO.className = 'q-inp';
+                inpO.value = q.opts; inpO.placeholder = "Да,Нет,Возможно";
+                inpO.oninput = (e) => state.quests[i].opts = e.target.value;
                 oGrp.appendChild(inpO);
                 card.appendChild(oGrp);
             }
 
             // Answer
             const aGrp = mkInpGroup('Правильный ответ (точно):');
-            const inpA = document.createElement('input');
-            inpA.className = 'q-inp';
-            inpA.value = q.a;
-            inpA.oninput = (e) => updateQuest(i, 'a', e.target.value);
+            const inpA = document.createElement('input'); inpA.className = 'q-inp';
+            inpA.value = q.a; inpA.oninput = (e) => state.quests[i].a = e.target.value;
             aGrp.appendChild(inpA);
             card.appendChild(aGrp);
 
@@ -273,8 +261,7 @@
     function mkInpGroup(label) {
         const d = document.createElement('div'); d.className = 'q-input-group';
         const l = document.createElement('span'); l.className = 'q-label'; l.innerText = label;
-        d.appendChild(l);
-        return d;
+        d.appendChild(l); return d;
     }
 
     window.addQuest = () => {
@@ -282,17 +269,6 @@
         renderQuests();
     };
 
-    window.removeQuest = (i) => {
-        state.quests.splice(i, 1);
-        renderQuests();
-    };
-
-    window.updateQuest = (i, field, val) => {
-        state.quests[i][field] = val;
-        if(field === 'type') renderQuests(); // Re-render to show/hide options
-    };
-
-    // --- PREVIEW LOGIC ---
     els.imgInp.onchange = e => {
         const f = e.target.files[0];
         if(f) {
@@ -301,6 +277,7 @@
                 state.avatar = v.target.result;
                 els.prevRing.src = state.avatar;
                 els.prevHead.src = state.avatar;
+                els.label.innerText = "✅ Фото загружено";
                 if(state.chatOpen) startSim();
             };
             r.readAsDataURL(f);
@@ -309,6 +286,7 @@
     els.prevRing.src = state.avatar;
     els.prevHead.src = state.avatar;
 
+    // --- PREVIEW SIMULATION ---
     window.toggleChat = () => {
         state.chatOpen = !state.chatOpen;
         if(state.chatOpen) {
@@ -316,93 +294,117 @@
             startSim();
         } else {
             els.chatWin.classList.remove('open');
+            clearInterval(state.interval);
         }
     };
 
     function startSim() {
         els.msgs.innerHTML = '';
-        state.currentQIndex = 0;
+        state.qIndex = 0;
         state.gameActive = true;
+        clearInterval(state.interval);
         
-        // Timer visual
-        state.timerEnabled = els.tmrOn.checked;
-        state.timerMin = els.tmrMin.value;
-        if(state.timerEnabled) {
+        // Timer
+        if(els.tmrOn.checked) {
             els.tmrDisplay.style.display = 'block';
-            els.tmrDisplay.innerText = (state.timerMin < 10 ? '0'+state.timerMin : state.timerMin) + ":00";
+            state.timerVal = parseInt(els.tmrMin.value) * 60;
+            updTimerDisplay();
+            state.interval = setInterval(() => {
+                state.timerVal--;
+                updTimerDisplay();
+                if(state.timerVal <= 0) {
+                    clearInterval(state.interval);
+                    addMsg('bot', els.msgLose.value);
+                    state.gameActive = false;
+                    els.inpArea.style.display = 'none';
+                }
+            }, 1000);
         } else {
             els.tmrDisplay.style.display = 'none';
         }
 
-        nextQuestion();
+        nextQ();
     }
 
-    function nextQuestion() {
-        if(state.currentQIndex >= state.quests.length) {
-            addMsg('bot', els.msgWin.value); // Win
+    function updTimerDisplay() {
+        const m = Math.floor(state.timerVal/60);
+        const s = state.timerVal%60;
+        els.tmrDisplay.innerText = (m<10?'0'+m:m) + ":" + (s<10?'0'+s:s);
+    }
+
+    function nextQ() {
+        if(state.qIndex >= state.quests.length) {
+            clearInterval(state.interval);
+            addMsg('bot', els.msgWin.value);
             state.gameActive = false;
-            hideInput();
+            els.inpArea.style.display = 'none';
             return;
         }
 
-        const q = state.quests[stateif(!val) return;
-        handleSimAnswer(val);
-        els.userInp.value = '';
-    };
-
-    function handleSimAnswer(val) {
-        if(!state.gameActive) return;
-
-        // User bubble
-        addMsg('user', val);
-
-        // Remove old buttons
-        const oldBtns = els.msgs.querySelectorAll('.opt-row');
-        oldBtns.forEach(b => b.remove());
-
-        const correct = state.quests[state.currentQIndex].a.trim().toLowerCase();
+        const q = state.quests[state.qIndex];
+        addMsg('bot', q.q);
         
-        if(val.toLowerCase() === correct) {
-            // Correct
-            state.currentQIndex++;
-            setTimeout(nextQuestion, 500);
+        if(q.type === 'choice') {
+            els.inpArea.style.display = 'none';
+            const div = document.createElement('div'); div.className='opt-row';
+            const opts = q.opts.split(',');
+            opts.forEach(o => {
+                const b = document.createElement('button'); b.className='opt-btn'; b.innerText = o.trim();
+                b.onclick = () => handleAns(o.trim());
+                div.appendChild(b);
+            });
+            els.msgs.appendChild(div);
+            els.msgs.scrollTop = els.msgs.scrollHeight;
         } else {
-            // Wrong -> Game Over
-            setTimeout(() => {
-                addMsg('bot', els.msgLose.value);
-                state.gameActive = false;
-                hideInput();
-            }, 500);
+            els.inpArea.style.display = 'flex';
         }
     }
 
-    function addMsg(role, text) {
-        const div = document.createElement('div');
-        div.className = `message msg-${role}`;
-        const img = document.createElement('img'); img.className = 'msg-avatar';
-        img.src = role === 'bot' ? state.avatar : defUser;
-        const bub = document.createElement('div'); bub.className = 'bubble';
-        if(role === 'user') bub.style.background = els.accent.value;
-        bub.innerText = text;
-        div.appendChild(img); div.appendChild(bub);
-        if(role === 'user') div.insertBefore(bub, img);
-        els.msgs.appendChild(div);
+    window.simSend = () => {
+        const v = els.userInp.value.trim();
+        if(!v) return;
+        handleAns(v);
+        els.userInp.value = '';
+    };
+
+    function handleAns(ans) {
+        if(!state.gameActive) return;
+        addMsg('user', ans);
+        
+        // Remove old buttons
+        const old = els.msgs.querySelectorAll('.opt-row');
+        old.forEach(b => b.remove());
+
+        const cor = state.quests[state.qIndex].a.trim().toLowerCase();
+        if(ans.toLowerCase() === cor) {
+            state.qIndex++;
+            setTimeout(nextQ, 600);
+        } else {
+            state.gameActive = false;
+            clearInterval(state.interval);
+            els.inpArea.style.display = 'none';
+            setTimeout(() => addMsg('bot', els.msgLose.value), 600);
+        }
+    }
+
+    function addMsg(role, txt) {
+        const d = document.createElement('div'); d.className=`message msg-${role}`;
+        const im = document.createElement('img'); im.className='msg-avatar'; im.src = role==='bot'?state.avatar:defUser;
+        const b = document.createElement('div'); b.className='bubble';
+        if(role==='user') b.style.background = els.accent.value;
+        b.innerText = txt;
+        d.appendChild(im); d.appendChild(b);
+        if(role==='user') d.insertBefore(b, im);
+        els.msgs.appendChild(d);
         els.msgs.scrollTop = els.msgs.scrollHeight;
     }
 
-    function hideInput() { els.inpArea.style.display = 'none'; }
-    function showInput() { els.inpArea.style.display = 'flex'; }
-
-    // Settings listeners
-    els.accent.oninput = () => { document.querySelector('.send-btn').style.background = els.accent.value; };
-    
-    // Initial Render
+    els.accent.oninput = () => document.querySelector('.send-btn').style.background = els.accent.value;
     renderQuests();
 
-
-    // --- GENERATE CODE ---
+    // --- GENERATOR ---
     els.copy.onclick = () => {
-        const code = getCode();
+        const code = generateCode();
         els.code.value = code;
         els.code.select();
         document.execCommand('copy');
@@ -410,22 +412,20 @@
         setTimeout(() => els.copy.innerText = "Скопировать код", 2000);
     };
 
-    function getCode() {
+    function generateCode() {
         const uid = "quiz-" + Math.random().toString(36).substr(2,6);
-        const av = state.avatar;
-        const us = defUser;
-        const col = els.accent.value;
-        const questsJSON = JSON.stringify(state.quests);
-        
-        const tmrOn = els.tmrOn.checked;
-        const tmrMin = els.tmrMin.value;
-        const txtWin = els.msgWin.value;
-        const txtLose = els.msgLose.value;
-
-        // Sounds
-        const sClick = "data:audio/wav;base64,UklGRi4AAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAACAgEBAQAAAA==";
-        const sPing = "data:audio/wav;base64,UklGRjQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQcAAAAAAP8A/wD/AP8A/wD/AP8AAA==";
-        const sType = "data:audio/wav;base64,UklGRlIAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoAAACAAAAAgAAAAACAAAAAgAAAAICAAIAAgIDAwMDA3t7e3qCgoKDf39/fAA==";
+        const data = {
+            av: state.avatar,
+            us: defUser,
+            col: els.accent.value,
+            qs: state.quests,
+            tmr: els.tmrOn.checked,
+            time: parseInt(els.tmrMin.value) * 60,
+            win: els.msgWin.value,
+            lose: els.msgLose.value,
+            // sounds
+            sClick: sClick, sPing: sPing, sType: sType
+        };
 
         return `
 <!DOCTYPE html>
@@ -435,46 +435,43 @@
 <style>
 * { box-sizing: border-box; }
 #${uid} { width:100%; height:100%; display:flex; justify-content:center; align-items:center; position:relative; }
-
-/* Ring */
 #${uid} .ring { width:90px; height:90px; border-radius:50%; background:#1E1234; border:3px solid rgba(255,255,255,0.3); cursor:pointer; display:flex; justify-content:center; align-items:center; box-shadow:0 5px 15px rgba(0,0,0,0.4); transition:0.3s; z-index:1; }
 #${uid} .ring:hover { transform:scale(1.05); }
 #${uid} .ring img { width:90%; height:90%; border-radius:50%; object-fit:cover; }
 
-/* Chat */
 #${uid} .win { position:absolute; width:98%; height:98%; background:#120C1C; border-radius:15px; border:1px solid #3A2E59; display:flex; flex-direction:column; box-shadow:0 10px 30px rgba(0,0,0,0.6); opacity:0; pointer-events:none; transform:scale(0.9); transition:0.3s; z-index:2; color:#fff; }
 #${uid} .win.show { opacity:1; pointer-events:all; transform:scale(1); }
 
 #${uid} .head { padding:10px; background:rgba(255,255,255,0.05); border-bottom:1px solid #3A2E59; display:flex; justify-content:space-between; align-items:center; }
 #${uid} .prof { display:flex; align-items:center; gap:8px; font-size:14px; font-weight:bold; }
 #${uid} .prof img { width:30px; height:30px; border-radius:50%; object-fit:cover; }
+#${uid} .tmr { font-family:monospace; background:#000; padding:2px 6px; border-radius:4px; color:${data.col}; display:${data.tmr ? 'block' : 'none'}; }
 #${uid} .cls { background:none; border:none; color:#888; font-size:20px; cursor:pointer; }
-#${uid} .tmr { font-family:monospace; background:#000; padding:2px 6px; border-radius:4px; color:${col}; display:${tmrOn ? 'block' : 'none'}; }
 
-#${uid} .logs { flex:1; padding:10px; overflow-y:auto; display:flex; flex-direction:column; gap:12px; scrollbar-width:thin; }
+#${uid} .logs { flex:1; padding:10px; overflow-y:auto; display:flex; flex-direction:column; gap:10px; scrollbar-width:thin; }
 #${uid} .row { display:flex; gap:6px; max-width:90%; align-items:flex-end; font-size:13px; line-height:1.4; }
 #${uid} .bot { align-self:flex-start; }
 #${uid} .usr { align-self:flex-end; flex-direction:row-reverse; }
 #${uid} .av { width:24px; height:24px; border-radius:50%; object-fit:cover; flex-shrink:0; }
 #${uid} .txt { padding:8px 12px; border-radius:15px; word-wrap:break-word; }
 #${uid} .bot .txt { background:rgba(255,255,255,0.1); border-bottom-left-radius:2px; }
-#${uid} .usr .txt { background:${col}; color:#fff; border-bottom-right-radius:2px; }
+#${uid} .usr .txt { background:${data.col}; color:#fff; border-bottom-right-radius:2px; }
 
-#${uid} .opts { display:flex; flex-wrap:wrap; gap:6px; margin-left:34px; margin-top:-6px; }
-#${uid} .btn-o { background:transparent; border:1px solid ${col}; color:white; padding:6px 12px; border-radius:15px; cursor:pointer; font-size:12px; }
-#${uid} .btn-o:hover { background:${col}; }
+#${uid} .opts { display:flex; flex-wrap:wrap; gap:6px; margin-left:34px; margin-top:-5px; }
+#${uid} .btn-o { background:transparent; border:1px solid ${data.col}; color:white; padding:6px 12px; border-radius:15px; cursor:pointer; font-size:12px; }
+#${uid} .btn-o:hover { background:${data.col}; }
 
 #${uid} .inp { padding:8px; background:rgba(0,0,0,0.2); border-top:1px solid #3A2E59; display:flex; gap:6px; }
 #${uid} input { flex:1; background:#0b0711; border:1px solid #3A2E59; border-radius:20px; padding:8px 12px; color:#fff; outline:none; }
-#${uid} .snd { width:34px; height:34px; border-radius:50%; background:${col}; border:none; color:#fff; cursor:pointer; display:flex; justify-content:center; align-items:center; }
+#${uid} .snd { width:34px; height:34px; border-radius:50%; background:${data.col}; border:none; color:#fff; cursor:pointer; display:flex; justify-content:center; align-items:center; }
 #${uid} .snd svg { width:16px; fill:white; margin-left:2px; }
 </style>
 
 <div id="${uid}">
-    <div class="ring" id="r-${uid}"><img src="${av}"></div>
+    <div class="ring" id="r-${uid}"><img src="${data.av}"></div>
     <div class="win" id="w-${uid}">
         <div class="head">
-            <div class="prof"><img src="${av}"><span>Аватар</span></div>
+            <div class="prof"><img src="${data.av}"><span>Аватар</span></div>
             <div class="tmr" id="t-${uid}">00:00</div>
             <button class="cls" id="c-${uid}">×</button>
         </div>
@@ -484,127 +481,87 @@
             <button class="snd" id="s-${uid}"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
         </div>
     </div>
-    <audio id="s1-${uid}" src="${sClick}"></audio>
-    <audio id="s2-${uid}" src="${sPing}"></audio>
-    <audio id="s3-${uid}" src="${sType}"></audio>
+    <audio id="s1-${uid}" src="${data.sClick}"></audio>
+    <audio id="s2-${uid}" src="${data.sPing}"></audio>
+    <audio id="s3-${uid}" src="${data.sType}"></audio>
 </div>
 
 <script>
 (function(){
-    var r = document.getElementById('r-${uid}');
-    var w = document.getElementById('w-${uid}');
-    var c = document.getElementById('c-${uid}');
-    var l = document.getElementById('l-${uid}');
-    var ia = document.getElementById('ia-${uid}');
-    var i = document.getElementById('i-${uid}');
-    var s = document.getElementById('s-${uid}');
-    var td = document.getElementById('t-${uid}');
+    var C = ${JSON.stringify(data)};
+    var r=document.getElementById('r-${uid}'), w=document.getElementById('w-${uid}'), c=document.getElementById('c-${uid}');
+    var l=document.getElementById('l-${uid}'), ia=document.getElementById('ia-${uid}'), i=document.getElementById('i-${uid}');
+    var s=document.getElementById('s-${uid}'), td=document.getElementById('t-${uid}');
+    var s1=document.getElementById('s1-${uid}'), s2=document.getElementById('s2-${uid}'), s3=document.getElementById('s3-${uid}');
     
-    var sc = document.getElementById('s1-${uid}');
-    var sp = document.getElementById('s2-${uid}');
-    var st = document.getElementById('s3-${uid}');
+    var idx=0, act=false, iv=null, rem=0;
 
-    var qs = ${questsJSON};
-    var idx = 0;
-    var active = false;
-    var timerOn = ${tmrOn};
-    var tTime = ${tmrMin} * 60;
-    var interval = null;
-
-    r.onclick = function(){ w.classList.add('show'); r.style.opacity='0'; r.style.pointerEvents='none'; if(!active) start(); };
-    c.onclick = function(){ w.classList.remove('show'); r.style.opacity='1'; r.style.pointerEvents='all'; };
-
-    function play(type) { 
-        var a = type===1?sc:(type===2?sp:st); a.currentTime=0; a.play().catch(function(){}); 
-    }
+    r.onclick = function(){ w.classList.add('show'); r.style.opacity='0'; r.style.pointerEvents='none'; if(!act) start(); };
+    c.onclick = function(){ w.classList.remove('show'); r.style.opacity='1'; r.style.pointerEvents='all'; clearInterval(iv); };
+    
+    function snd(t){ var x=t==1?s1:(t==2?s2:s3); x.currentTime=0; x.play().catch(function(){}); }
 
     function add(who, txt) {
-        var d = document.createElement('div'); d.className='row '+who;
-        var im = document.createElement('img'); im.className='av'; im.src=who==='bot'?"${av}":"${us}";
-        var t = document.createElement('div'); t.className='txt'; t.innerText=txt;
-        d.appendChild(im); d.appendChild(t);
-        if(who==='usr') d.insertBefore(t, im);
-        l.appendChild(d); l.scrollTop = l.scrollHeight;
+        var d=document.createElement('div'); d.className='row '+who;
+        var im=document.createElement('img'); im.className='av'; im.src=who==='bot'?C.av:C.us;
+        var t=document.createElement('div'); t.className='txt'; t.innerText=txt;
+        d.appendChild(im); d.appendChild(t); if(who==='usr') d.insertBefore(t, im);
+        l.appendChild(d); l.scrollTop=l.scrollHeight;
     }
 
     function start() {
-        active = true; idx = 0; l.innerHTML = '';
-        if(timerOn) startTimer();
+        idx=0; act=true; l.innerHTML='';
+        if(C.tmr) { rem=C.time; updT(); iv=setInterval(function(){ rem--; updT(); if(rem<=0) end(false); }, 1000); }
         ask();
     }
-
-    function startTimer() {
-        var rem = tTime;
-        updTime(rem);
-        interval = setInterval(function(){
-            rem--;
-            updTime(rem);
-            if(rem <= 0) gameOver(true);
-        }, 1000);
-    }
     
-    function updTime(s) {
-        var m = Math.floor(s/60); var sec = s%60;
-        td.innerText = (m<10?'0'+m:m) + ':' + (sec<10?'0'+sec:sec);
-    }
+    function updT() { var m=Math.floor(rem/60), sec=rem%60; td.innerText=(m<10?'0'+m:m)+':'+(sec<10?'0'+sec:sec); }
 
     function ask() {
-        if(idx >= qs.length) { win(); return; }
-        var q = qs[idx];
-        play(2);
-        add('bot', q.q);
+        if(idx>=C.qs.length) { end(true); return; }
+        var q=C.qs[idx];
+        snd(2); add('bot', q.q);
         
-        // Remove old opts
-        var old = l.querySelectorAll('.opts'); for(var k=0;k<old.length;k++) old[k].remove();
+        // clean options
+        var oo=l.querySelectorAll('.opts'); for(var k=0;k<oo.length;k++) oo[k].remove();
 
-        if(q.type === 'choice') {
-            ia.style.display = 'none';
-            var d = document.createElement('div'); d.className='opts';
-            var ops = q.opts.split(',');
-            for(var x=0; x<ops.length; x++) {
-                var btn = document.createElement('button'); btn.className='btn-o';
-                btn.innerText = ops[x].trim();
-                (function(val){ btn.onclick = function(){ check(val); }; })(ops[x].trim());
-                d.appendChild(btn);
+        if(q.type==='choice') {
+            ia.style.display='none';
+            var d=document.createElement('div'); d.className='opts';
+            var ops=q.opts.split(',');
+            for(var x=0;x<ops.length;x++) {
+                var b=document.createElement('button'); b.className='btn-o'; b.innerText=ops[x].trim();
+                (function(v){ b.onclick=function(){ ans(v); } })(ops[x].trim());
+                d.appendChild(b);
             }
-            l.appendChild(d); l.scrollTop = l.scrollHeight;
+            l.appendChild(d); l.scrollTop=l.scrollHeight;
         } else {
-            ia.style.display = 'flex';
+            ia.style.display='flex';
         }
     }
 
-    function check(ans) {
-        if(!active) return;
-        play(3);
-        add('usr', ans);
-        var cor = qs[idx].a.trim().toLowerCase();
-        if(ans.toLowerCase() === cor) {
-            idx++;
-            setTimeout(ask, 600);
+    function ans(v) {
+        if(!act) return;
+        snd(3); add('usr', v);
+        var cor = C.qs[idx].a.trim().toLowerCase();
+        // clean opts
+        var oo=l.querySelectorAll('.opts'); for(var k=0;k<oo.length;k++) oo[k].remove();
+        
+        if(v.toLowerCase()===cor) {
+            idx++; setTimeout(ask, 600);
         } else {
-            setTimeout(function(){ gameOver(false); }, 600);
+            setTimeout(function(){ end(false); }, 600);
         }
     }
 
-    function gameOver(timeout) {
-        active = false;
-        clearInterval(interval);
-        ia.style.display = 'none';
-        var old = l.querySelectorAll('.opts'); for(var k=0;k<old.length;k++) old[k].remove();
-        play(2);
-        add('bot', timeout ? "Время вышло. ${txtLose}" : "${txtLose}");
+    function end(win) {
+        act=false; clearInterval(iv); ia.style.display='none';
+        var oo=l.querySelectorAll('.opts'); for(var k=0;k<oo.length;k++) oo[k].remove();
+        snd(2); add('bot', win ? C.win : C.lose);
     }
 
-    function win() {
-        active = false;
-        clearInterval(interval);
-        ia.style.display = 'none';
-        play(2);
-        add('bot', "${txtWin}");
-    }
-
-    s.onclick = function(){ var v=i.value.trim(); if(v){ i.value=''; check(v); } };
-    i.onkeypress = function(e){ if(e.key==='Enter') s.onclick(); };
+    s.onclick=function(){ var v=i.value.trim(); if(v){ i.value=''; ans(v); } };
+    i.onkeypress=function(e){ if(e.key==='Enter') s.onclick(); };
 
 })();
 <\/script>
