@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Говорящий аватар</title>
+    <title>Говорящий аватар (Прозрачный)</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -61,19 +61,26 @@
             align-items: center; 
         }
 
-        /* Preview Box */
+        /* Preview Area - теперь с шашечками для имитации прозрачности */
         #preview-box {
             display: flex;
             justify-content: center;
             align-items: center;
             position: relative;
-            background-color: #120C1C; 
-            border: 1px solid #3A2E59; 
+            /* Шахматный фон для проверки прозрачности */
+            background-image: linear-gradient(45deg, #181818 25%, transparent 25%), linear-gradient(-45deg, #181818 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #181818 75%), linear-gradient(-45deg, transparent 75%, #181818 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+            background-color: #222;
+            
+            border: 1px dashed #555; 
             border-radius: 20px;
             overflow: hidden;
             transition: all 0.3s ease-out;
             padding: 10px;
             box-sizing: border-box;
+            width: 100%;
+            min-height: 400px;
         }
 
         .preview-content {
@@ -81,7 +88,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 15px;
+            gap: 10px; /* Уменьшил отступ, так как добавились волны */
             width: 100%;
             height: 100%;
         }
@@ -96,10 +103,12 @@
             transition: all 0.3s ease;
             width: 200px;
             height: 200px;
+            /* Важно: фон применяется только к кругу */
+            background-clip: padding-box;
         }
 
         .avatar-img {
-            width: 92%; /* Синхронизировано с финальным кодом */
+            width: 92%;
             height: 92%;
             border-radius: 50%;
             object-fit: cover;
@@ -113,11 +122,41 @@
             position: absolute;
         }
 
+        /* Sound Waves Simulation */
+        .sound-waves {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            height: 30px;
+            opacity: 0.3; /* Тусклые когда пауза */
+            transition: opacity 0.3s;
+        }
+        .sound-waves.active {
+            opacity: 1;
+        }
+        .bar {
+            width: 6px;
+            background: var(--accent);
+            border-radius: 10px;
+            animation: none;
+            height: 5px;
+        }
+        .sound-waves.active .bar {
+            animation: sound-jump 1s infinite ease-in-out;
+        }
+        
+        @keyframes sound-jump {
+            0%, 100% { height: 5px; }
+            50% { height: 25px; }
+        }
+
         .controls-row {
             display: flex;
             align-items: center;
             gap: 20px;
-            flex-shrink: 0; 
+            flex-shrink: 0;
+            margin-top: 5px; 
         }
 
         .c-btn {
@@ -141,7 +180,6 @@
             width: 60px;
             height: 60px;
             border-radius: 50%;
-            /* Градиент по умолчанию, переопределяется JS */
             background: linear-gradient(135deg, #a960ec, #f72585);
             box-shadow: 0 5px 20px rgba(247, 37, 133, 0.4);
             display: flex;
@@ -160,6 +198,7 @@
             width: 30px;
             height: 30px;
             fill: white;
+            filter: drop-shadow(0 0 3px rgba(0,0,0,0.5)); /* Тень чтобы видеть на светлом фоне */
         }
 
         /* Inputs */
@@ -273,13 +312,23 @@
     <div class="editor-layout">
         <!-- Preview Column -->
         <div class="col">
-            <h3 style="text-align:center">Предпросмотр</h3>
+            <h3 style="text-align:center">Предпросмотр (Прозрачный фон)</h3>
             <div id="preview-box">
                 <div class="preview-content">
                     <div class="ring-container" id="prev-ring">
                         <span class="placeholder-text" id="prev-placeholder">Нет фото</span>
                         <img id="prev-img" class="avatar-img">
                     </div>
+                    
+                    <!-- Визуализация волн -->
+                    <div class="sound-waves" id="prev-waves">
+                        <div class="bar" style="animation-delay: 0.1s"></div>
+                        <div class="bar" style="animation-delay: 0.3s"></div>
+                        <div class="bar" style="animation-delay: 0.0s"></div>
+                        <div class="bar" style="animation-delay: 0.4s"></div>
+                        <div class="bar" style="animation-delay: 0.2s"></div>
+                    </div>
+
                     <div class="controls-row">
                         <button class="c-btn arrow-btn" id="prev-b-back"><svg viewBox="0 0 24 24"><path d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z"/></svg></button>
                         <button class="c-btn play-big" id="prev-b-play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
@@ -306,7 +355,7 @@
             <span class="label-text">Размер аватара:</span>
             <input type="range" id="rng-size" min="30" max="85" value="65" style="width:100%">
 
-            <span class="label-text">Цвет свечения (кольцо):</span>
+            <span class="label-text">Цвет свечения и волн:</span>
             <input type="color" id="inp-color" value="#F72585">
 
             <span class="label-text">Интенсивность свечения:</span>
@@ -315,10 +364,10 @@
             <span class="label-text">Цвет кнопки Play:</span>
             <input type="color" id="inp-btn-color" value="#F72585">
 
-            <span class="label-text">Цвет фона:</span>
+            <span class="label-text">Цвет фона КРУГА (остальное прозрачное):</span>
             <input type="color" id="inp-bg-color" value="#120C1C">
 
-            <span class="label-text">Цвет рамки виджета:</span>
+            <span class="label-text">Цвет рамки КРУГА:</span>
             <input type="color" id="inp-border-color" value="#3A2E59">
         </div>
     </div>
@@ -338,11 +387,12 @@
         prevImg: document.getElementById('prev-img'),
         prevPlace: document.getElementById('prev-placeholder'),
         prevRing: document.getElementById('prev-ring'),
+        prevWaves: document.getElementById('prev-waves'), // Волны
         prevBox: document.getElementById('preview-box'), 
         audio: document.getElementById('main-audio'),
         btnPlay: document.getElementById('prev-b-play'),
         color: document.getElementById('inp-color'),
-        btnColor: document.getElementById('inp-btn-color'), // Новая кнопка
+        btnColor: document.getElementById('inp-btn-color'),
         borderColor: document.getElementById('inp-border-color'),
         bgColor: document.getElementById('inp-bg-color'),
         glow: document.getElementById('rng-glow'),
@@ -367,8 +417,6 @@
                 els.prevImg.style.display = 'block';
                 els.prevPlace.style.display = 'none';
                 els.imgName.innerText = "✅ Картинка загружена";
-                
-                // Форсируем обновление src чтобы гарантировать соответствие
                 updatePreview();
             } else {
                 els.audio.src = state.audio;
@@ -387,7 +435,7 @@
 
     const updatePreview = () => {
         const color = els.color.value;
-        const bColor = els.btnColor.value; // Цвет кнопки
+        const bColor = els.btnColor.value;
         const glowSize = els.glow.value;
         const sizeVal = els.size.value;
         const bordColor = els.borderColor.value;
@@ -398,22 +446,18 @@
         els.prevRing.style.width = pxSize + 'px';
         els.prevRing.style.height = pxSize + 'px';
 
-        const boxWidth = pxSize + 50; 
-        const boxHeight = pxSize + 130; 
-        els.prevBox.style.width = boxWidth + 'px';
-        els.prevBox.style.height = boxHeight + 'px';
-
-        // Свечение кольца
+        // Применяем цвета только к кругу (ring), а не к коробке
         els.prevRing.style.boxShadow = `0 0 ${glowSize}px ${color}, inset 0 0 ${glowSize/2}px ${color}`;
-        els.prevRing.style.borderColor = color;
+        els.prevRing.style.borderColor = bordColor;
+        els.prevRing.style.backgroundColor = bgColor;
 
-        // Фон и рамка
-        els.prevBox.style.borderColor = bordColor;
-        els.prevBox.style.backgroundColor = bgColor;
+        // Цвет волн
+        const bars = els.prevWaves.querySelectorAll('.bar');
+        bars.forEach(b => b.style.backgroundColor = color);
 
         // Цвет кнопки Play
         els.btnPlay.style.background = bColor;
-        els.btnPlay.style.boxShadow = `0 4px 15px ${bColor}80`; // полупрозрачная тень того же цвета
+        els.btnPlay.style.boxShadow = `0 4px 15px ${bColor}80`;
     };
 
     const togglePlay = () => els.audio.paused ? els.audio.play() : els.audio.pause();
@@ -425,14 +469,17 @@
 
     els.audio.onplay = () => {
         els.btnPlay.innerHTML = iconPause;
+        els.prevWaves.classList.add('active'); // Включаем волны
         updatePreview();
     };
     els.audio.onpause = () => {
         els.btnPlay.innerHTML = iconPlay;
+        els.prevWaves.classList.remove('active'); // Выключаем волны
         updatePreview();
     };
     els.audio.onended = () => {
         els.btnPlay.innerHTML = iconPlay;
+        els.prevWaves.classList.remove('active');
         updatePreview();
     };
 
@@ -476,10 +523,8 @@
         align-items: center;
         font-family: sans-serif;
         box-sizing: border-box;
-        background-color: ${bgColor}; 
-        border: 1px solid ${bordColor};
-        border-radius: 20px;
-        padding: 10px;
+        /* Фон полностью прозрачный, убрали border и padding внешнего контейнера */
+        background: transparent;
     }
     
     #${uid} .ring {
@@ -490,14 +535,17 @@
         max-height: 80vmin;
         
         border-radius: 50%;
-        border: 2px solid rgba(255,255,255,0.15);
+        /* Настройки применяются только к кругу */
+        border: 2px solid ${bordColor};
+        background-color: ${bgColor};
+
         display: flex;
         justify-content: center;
         align-items: center;
         transition: all 0.4s ease;
-        margin-bottom: 20px;
         cursor: pointer;
         flex-shrink: 0;
+        z-index: 2;
     }
     
     #${uid} .ring.playing {
@@ -507,12 +555,42 @@
     }
     
     #${uid} .avatar {
-        /* Эти значения должны точно совпадать с CSS редактора */
         width: 92%;
         height: 92%;
         border-radius: 50%;
         object-fit: cover;
         pointer-events: none;
+    }
+
+    /* Sound Waves */
+    #${uid} .waves-container {
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        margin: 5px 0;
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+    #${uid} .waves-container.active {
+        opacity: 1;
+    }
+    
+    #${uid} .bar {
+        width: 6px;
+        height: 5px;
+        background-color: ${color};
+        border-radius: 10px;
+    }
+    
+    #${uid} .waves-container.active .bar {
+        animation: waveAnim 1s infinite ease-in-out;
+    }
+    
+    @keyframes waveAnim {
+        0%, 100% { height: 5px; }
+        50% { height: 30px; }
     }
 
     #${uid} .controls {
@@ -540,26 +618,25 @@
     #${uid} button:active { transform: scale(0.95); }
 
     #${uid} .btn-play {
-        width: 60px;
-        height: 60px;
+        width: 50px;
+        height: 50px;
         border-radius: 50%;
-        /* Цвет кнопки из настроек */
         background: ${bColor};
         box-shadow: 0 4px 15px ${bColor}80;
     }
     #${uid} .btn-play svg {
+        width: 24px;
+        height: 24px;
+        fill: white;
+    }
+    #${uid} .btn-play svg.is-play { margin-left: 3px; }
+
+    #${uid} .btn-arrow svg {
         width: 28px;
         height: 28px;
         fill: white;
-    }
-    #${uid} .btn-play svg.is-play { margin-left: 4px; }
-
-    #${uid} .btn-arrow svg {
-        width: 32px;
-        height: 32px;
-        fill: white;
         opacity: 0.8;
-        filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3));
+        filter: drop-shadow(0 0 4px rgba(0,0,0,0.7)); /* Тень для видимости на белом фоне */
     }
     #${uid} .btn-arrow:hover svg { opacity: 1; }
 
@@ -568,6 +645,14 @@
 <div id="${uid}">
     <div class="ring">
         <img class="avatar" src="${state.img}">
+    </div>
+    
+    <div class="waves-container" id="waves-${uid}">
+        <div class="bar" style="animation-delay: 0.1s"></div>
+        <div class="bar" style="animation-delay: 0.3s"></div>
+        <div class="bar" style="animation-delay: 0.0s"></div>
+        <div class="bar" style="animation-delay: 0.4s"></div>
+        <div class="bar" style="animation-delay: 0.2s"></div>
     </div>
     
     <div class="controls">
@@ -588,6 +673,7 @@
         var root = document.getElementById('${uid}');
         var audio = document.getElementById('audio-${uid}');
         var ring = root.querySelector('.ring');
+        var waves = document.getElementById('waves-${uid}');
         var playBtn = document.getElementById('play-${uid}');
         var prevBtn = document.getElementById('prev-${uid}');
         var nextBtn = document.getElementById('next-${uid}');
@@ -609,14 +695,17 @@
         audio.onplay = function() {
             playBtn.innerHTML = svgPause;
             ring.classList.add('playing');
+            waves.classList.add('active');
         };
         audio.onpause = function() {
             playBtn.innerHTML = svgPlay;
             ring.classList.remove('playing');
+            waves.classList.remove('active');
         };
         audio.onended = function() {
             playBtn.innerHTML = svgPlay;
             ring.classList.remove('playing');
+            waves.classList.remove('active');
         };
     })();
 <\/script>
