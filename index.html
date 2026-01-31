@@ -56,11 +56,15 @@
             background: rgba(0,0,0,0.2);
             border-radius: 15px;
             border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            /* Для центрирования превью */
+            align-items: center; 
         }
 
         /* Preview Box */
         #preview-box {
-            height: 400px;
+            /* Убрана фиксированная высота 400px */
             display: flex;
             justify-content: center;
             align-items: center;
@@ -70,7 +74,10 @@
             border: 1px solid #3A2E59; 
             border-radius: 20px;
             overflow: hidden;
-            transition: all 0.3s;
+            /* Плавное изменение размеров рамки */
+            transition: all 0.3s ease-out;
+            padding: 10px;
+            box-sizing: border-box;
         }
 
         .preview-content {
@@ -78,7 +85,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 20px;
+            gap: 15px; /* Отступ между кольцом и кнопками */
             width: 100%;
             height: 100%;
         }
@@ -114,6 +121,8 @@
             display: flex;
             align-items: center;
             gap: 20px;
+            /* Чтобы кнопки не сжимались */
+            flex-shrink: 0; 
         }
 
         .c-btn {
@@ -168,6 +177,8 @@
             margin-bottom: 15px;
             border-radius: 8px;
             transition: 0.3s;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         .custom-file:hover {
@@ -190,6 +201,7 @@
         input[type=range] {
             accent-color: #888;
             cursor: pointer;
+            width: 100%;
         }
         
         /* Стили цветов */
@@ -246,6 +258,11 @@
             font-size: 12px;
             resize: none;
         }
+        
+        /* Чтобы настройки растягивались на всю ширину колонки */
+        .col:nth-child(2) {
+            align-items: stretch;
+        }
     </style>
 </head>
 <body>
@@ -296,7 +313,7 @@
             <span class="label-text">Интенсивность свечения:</span>
             <input type="range" id="rng-glow" min="10" max="50" value="20" style="width:100%">
 
-            <span class="label-text">Цвет фона виджета:</span>
+            <span class="label-text">Цвет фона:</span>
             <input type="color" id="inp-bg-color" value="#120C1C">
 
             <span class="label-text">Цвет рамки виджета:</span>
@@ -369,16 +386,27 @@
         const bordColor = els.borderColor.value;
         const bgColor = els.bgColor.value;
         
-        // 1. Размер кольца
+        // 1. Вычисляем размер аватара (px) для превью
+        // Базовый размер при 100% будет около 350px
         const pxSize = (sizeVal / 100) * 350; 
+        
+        // Применяем размер к кольцу
         els.prevRing.style.width = pxSize + 'px';
         els.prevRing.style.height = pxSize + 'px';
 
-        // 2. Свечение
+        // 2. ИЗМЕНЯЕМ РАЗМЕР РАМКИ (КОРОБКИ) В ЗАВИСИМОСТИ ОТ АВАТАРА
+        // Рамка = размер аватара + место под кнопки (ок. 100px) + отступы (ок. 40px)
+        const boxWidth = pxSize + 50; // Аватар + немного запаса по бокам
+        const boxHeight = pxSize + 130; // Аватар + кнопки + отступы
+        
+        els.prevBox.style.width = boxWidth + 'px';
+        els.prevBox.style.height = boxHeight + 'px';
+
+        // 3. Свечение
         els.prevRing.style.boxShadow = `0 0 ${glowSize}px ${color}, inset 0 0 ${glowSize/2}px ${color}`;
         els.prevRing.style.borderColor = color;
 
-        // 3. Рамка и фон предпросмотра
+        // 4. Цвета
         els.prevBox.style.borderColor = bordColor;
         els.prevBox.style.backgroundColor = bgColor;
     };
@@ -406,6 +434,8 @@
 
     // Listeners
     [els.color, els.glow, els.size, els.borderColor, els.bgColor].forEach(el => el.oninput = updatePreview);
+    
+    // Initial call to set sizes
     updatePreview();
 
     // --- HTML GENERATOR ---
@@ -502,110 +532,3 @@
         transition: transform 0.2s;
         -webkit-tap-highlight-color: transparent;
     }
-    #${uid} button:hover { transform: scale(1.1); }
-    #${uid} button:active { transform: scale(0.95); }
-
-    /* Кнопка Play */
-    #${uid} .btn-play {
-        width: 60px;
-        height: 60px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #a960ec, #f72585);
-        box-shadow: 0 4px 15px rgba(247, 37, 133, 0.5);
-    }
-    #${uid} .btn-play svg {
-        width: 28px;
-        height: 28px;
-        fill: white;
-    }
-    #${uid} .btn-play svg.is-play { margin-left: 4px; }
-
-    /* Стрелки */
-    #${uid} .btn-arrow svg {
-        width: 32px;
-        height: 32px;
-        fill: white;
-        opacity: 0.8;
-        filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3));
-    }
-    #${uid} .btn-arrow:hover svg { opacity: 1; }
-
-</style>
-
-<div id="${uid}">
-    <div class="ring">
-        <img class="avatar" src="${state.img}">
-    </div>
-    
-    <div class="controls">
-        <button class="btn-arrow" id="prev-${uid}"><svg viewBox="0 0 24 24"><path d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z"/></svg></button>
-        
-        <button class="btn-play" id="play-${uid}">
-            <svg class="is-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-        </button>
-        
-        <button class="btn-arrow" id="next-${uid}"><svg viewBox="0 0 24 24"><path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/></svg></button>
-    </div>
-
-    <audio id="audio-${uid}" src="${state.audio}" style="display:none"></audio>
-</div>
-
-<script>
-    (function() {
-        var root = document.getElementById('${uid}');
-        var audio = document.getElementById('audio-${uid}');
-        var ring = root.querySelector('.ring');
-        var playBtn = document.getElementById('play-${uid}');
-        var prevBtn = document.getElementById('prev-${uid}');
-        var nextBtn = document.getElementById('next-${uid}');
-        
-        var svgPlay = '<svg class="is-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
-        var svgPause = '<svg viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
-
-        function toggle() {
-            if(audio.paused) audio.play();
-            else audio.pause();
-        }
-
-        playBtn.onclick = toggle;
-        ring.onclick = toggle;
-
-        prevBtn.onclick = function() { audio.currentTime = Math.max(0, audio.currentTime - 5); };
-        nextBtn.onclick = function() { audio.currentTime += 5; };
-
-        audio.onplay = function() {
-            playBtn.innerHTML = svgPause;
-            ring.classList.add('playing');
-        };
-        audio.onpause = function() {
-            playBtn.innerHTML = svgPlay;
-            ring.classList.remove('playing');
-        };
-        audio.onended = function() {
-            playBtn.innerHTML = svgPlay;
-            ring.classList.remove('playing');
-        };
-    })();
-<\/script>
-</body>
-</html>`;
-    };
-
-    els.btnCopy.onclick = () => {
-        const html = generateHTML();
-        if(!html) return;
-        
-        els.outCode.value = html;
-        els.outCode.select();
-        try {
-            document.execCommand('copy');
-            els.btnCopy.innerText = "✅ Скопировано! Вставьте в Genially";
-        } catch(e) {
-            alert("Нажмите Ctrl+C чтобы скопировать");
-        }
-        setTimeout(() => els.btnCopy.innerText = "Скопировать код", 3000);
-    };
-
-</script>
-</body>
-</html>
