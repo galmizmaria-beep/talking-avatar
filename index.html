@@ -1,109 +1,161 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Конструктор Квиза (Fixed Media)</title>
+    <title>Конструктор Квиза (Genially Friendly)</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root { --bg: #120C1C; --surface: #1E1234; --primary: #A450F3; --accent: #F72585; --text: #EAE2FF; --border: #3A2E59; --input-bg: #0b0711; --danger: #ff4757; --success: #2ecc71; }
         * { box-sizing: border-box; }
-        body { font-family: 'Poppins', sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        body { font-family: 'Poppins', sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 10px; display: flex; justify-content: center; min-height: 100vh; }
         
-        #editor-container { max-width: 1250px; width: 100%; background-color: var(--surface); padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid var(--border); }
-        h1 { text-align: center; margin-bottom: 30px; text-shadow: 0 0 10px var(--accent); }
-        .editor-layout { display: flex; flex-wrap: wrap; gap: 30px; }
-        .col { flex: 1; min-width: 350px; display: flex; flex-direction: column; gap: 15px; }
+        /* Сделали контейнер чуть шире и компактнее по высоте */
+        #editor-container { max-width: 1300px; width: 100%; background-color: var(--surface); padding: 20px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid var(--border); }
+        h1 { text-align: center; margin-bottom: 20px; font-size: 1.5rem; text-shadow: 0 0 10px var(--accent); }
         
-        /* Preview Area */
+        .editor-layout { display: flex; flex-wrap: wrap; gap: 20px; }
+        .col { flex: 1; min-width: 320px; display: flex; flex-direction: column; gap: 12px; }
+        
+        /* Preview Area - Fixed height to fit slides better */
         #preview-box {
             position: relative;
             background-image: linear-gradient(45deg, #181818 25%, transparent 25%), linear-gradient(-45deg, #181818 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #181818 75%), linear-gradient(-45deg, transparent 75%, #181818 75%);
             background-size: 20px 20px; background-color: #222; border: 1px dashed #555; border-radius: 20px;
-            overflow: hidden; width: 100%; height: 700px; display: flex; justify-content: center; align-items: center;
+            overflow: hidden; width: 100%; height: 600px; display: flex; justify-content: center; align-items: center;
         }
         .widget-wrapper { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; position: relative; }
 
         /* WIDGET STYLES (Shared) */
-        .avatar-ring { width: 100px; height: 100px; border-radius: 50%; border: 3px solid var(--border); background: var(--bg); cursor: pointer; position: absolute; z-index: 10; display: flex; justify-content: center; align-items: center; transition: 0.3s; }
+        .avatar-ring { width: 90px; height: 90px; border-radius: 50%; border: 3px solid var(--border); background: var(--bg); cursor: pointer; position: absolute; z-index: 10; display: flex; justify-content: center; align-items: center; transition: 0.3s; }
         .avatar-ring:hover { transform: scale(1.05); }
         .avatar-ring img { width: 90%; height: 90%; border-radius: 50%; object-fit: cover; }
         
-        .chat-window { width: 90%; height: 95%; background: var(--bg); border: 1px solid var(--border); border-radius: 20px; display: flex; flex-direction: column; position: absolute; z-index: 20; opacity: 0; pointer-events: none; transform: scale(0.9); transition: all 0.3s; box-shadow: 0 10px 50px rgba(0,0,0,0.7); }
+        .chat-window { width: 95%; height: 96%; background: var(--bg); border: 1px solid var(--border); border-radius: 20px; display: flex; flex-direction: column; position: absolute; z-index: 20; opacity: 0; pointer-events: none; transform: scale(0.95); transition: all 0.3s; box-shadow: 0 10px 50px rgba(0,0,0,0.7); }
         .chat-window.open { opacity: 1; pointer-events: all; transform: scale(1); }
         
-        .chat-header { padding: 12px; background: rgba(255,255,255,0.05); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .chat-header { padding: 10px; background: rgba(255,255,255,0.05); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
         .header-info { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 14px; }
-        .header-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
+        .header-avatar { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; }
         .timer-display { font-family: monospace; font-size: 14px; background: #000; padding: 2px 6px; border-radius: 4px; color: var(--accent); display: none; }
         .close-btn { background: none; border: none; color: #aaa; cursor: pointer; font-size: 24px; line-height: 1; }
         
-        .chat-messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
-        .message { display: flex; align-items: flex-end; gap: 8px; max-width: 90%; }
+        .chat-messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; min-height: 0; }
+        .message { display: flex; align-items: flex-end; gap: 8px; max-width: 95%; }
         .msg-avatar { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
         
-        .bubble-cont { display: flex; flex-direction: column; gap: 6px; max-width: 100%; }
-        .bubble { padding: 10px 14px; border-radius: 18px; font-size: 0.9rem; line-height: 1.4; word-wrap: break-word; }
+        .bubble-cont { display: flex; flex-direction: column; gap: 4px; max-width: 100%; }
+        .bubble { padding: 8px 12px; border-radius: 15px; font-size: 0.85rem; line-height: 1.4; word-wrap: break-word; }
         .msg-bot { align-self: flex-start; }
         .msg-bot .bubble { background: rgba(255,255,255,0.1); border-bottom-left-radius: 2px; }
         .msg-user { align-self: flex-end; flex-direction: row-reverse; }
         .msg-user .bubble { background: var(--accent); color: white; border-bottom-right-radius: 2px; }
         
-        /* Media inside chat */
-        .chat-media { border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,0.2); max-width: 250px; }
-        .chat-media img { width: 100%; height: auto; display: block; }
-        .chat-audio { width: 200px; height: 35px; }
+        /* Media inside chat - FIXED SIZING */
+        .chat-media { border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,0.2); max-width: 200px; width: 100%; display: flex; }
+        .chat-media img { width: 100%; height: auto; max-height: 150px; object-fit: contain; display: block; background: #000; }
+        .chat-audio { width: 200px; height: 32px; }
 
-        /* Options Buttons */
         .opt-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 5px; margin-left: 36px; }
-        .opt-btn { background: transparent; border: 1px solid var(--accent); color: white; padding: 6px 12px; border-radius: 15px; cursor: pointer; font-size: 0.85rem; transition: 0.2s; }
+        .opt-btn { background: transparent; border: 1px solid var(--accent); color: white; padding: 5px 10px; border-radius: 12px; cursor: pointer; font-size: 0.8rem; transition: 0.2s; }
         .opt-btn:hover { background: var(--accent); }
 
-        .chat-input-area { padding: 15px; background: rgba(0,0,0,0.2); border-top: 1px solid var(--border); display: flex; gap: 10px; }
-        .chat-input { flex: 1; background: var(--input-bg); border: 1px solid var(--border); border-radius: 20px; padding: 10px 15px; color: white; outline: none; }
-        .send-btn { background: var(--accent); border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; display: flex; justify-content: center; align-items: center; transition: 0.2s; }
-        .send-btn:hover { transform: scale(1.1); }
-        .send-btn svg { width: 18px; fill: white; margin-left: 2px; }
+        .chat-input-area { padding: 10px; background: rgba(0,0,0,0.2); border-top: 1px solid var(--border); display: flex; gap: 8px; flex-shrink: 0; }
+        .chat-input { flex: 1; background: var(--input-bg); border: 1px solid var(--border); border-radius: 20px; padding: 8px 12px; color: white; outline: none; font-size: 0.9rem; }
+        .send-btn { background: var(--accent); border: none; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; justify-content: center; align-items: center; transition: 0.2s; }
+        .send-btn svg { width: 16px; fill: white; margin-left: 2px; }
 
         /* --- Editor UI --- */
-        .custom-file { padding: 10px; background: rgba(0,0,0,0.2); border: 1px dashed var(--border); text-align: center; cursor: pointer; border-radius: 8px; position: relative; display:flex; flex-direction:column; align-items:center; }
+        .custom-file { padding: 8px; background: rgba(0,0,0,0.2); border: 1px dashed var(--border); text-align: center; cursor: pointer; border-radius: 8px; position: relative; display:flex; flex-direction:column; align-items:center; font-size: 0.85rem; }
         .file-input { position: absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; }
         
-        input[type="text"], input[type="number"] { width: 100%; padding: 10px; background: var(--input-bg); border: 1px solid var(--border); border-radius: 8px; color: white; font-family: inherit; }
-        input[type="color"] { width: 100%; height: 40px; border: none; background: none; cursor: pointer; }
+        input[type="text"], input[type="number"], select { width: 100%; padding: 8px; background: var(--input-bg); border: 1px solid var(--border); border-radius: 8px; color: white; font-family: inherit; font-size: 0.9rem; }
+        input[type="color"] { width: 100%; height: 35px; border: none; background: none; cursor: pointer; }
         
-        .section-title { font-weight: 600; color: var(--primary); margin-top: 10px; display: block; border-bottom: 1px solid var(--border); padding-bottom: 5px; margin-bottom: 10px; }
-        .row { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
+        .section-title { font-weight: 600; color: var(--primary); margin-top: 5px; display: block; border-bottom: 1px solid var(--border); padding-bottom: 4px; margin-bottom: 8px; font-size: 0.95rem; }
+        .row { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; }
         
-        /* Quest Builder */
-        #quest-container { max-height: 400px; overflow-y: auto; padding-right: 5px; border: 1px solid var(--border); border-radius: 8px; padding: 10px; background: rgba(0,0,0,0.2); }
-        .q-card { background: var(--surface); border: 1px solid var(--border); padding: 15px; border-radius: 10px; margin-bottom: 10px; position: relative; }
-        .q-header { display: flex; justify-content: space-between; margin-bottom: 10px; align-items: center; }
-        .q-type { font-size: 0.8rem; background: var(--primary); padding: 2px 6px; border-radius: 4px; }
-        .q-del { background: var(--danger); border: none; color: white; width: 24px; height: 24px; border-radius: 50%; cursor: pointer; display: flex; justify-content: center; align-items: center; }
+        #quest-container { max-height: 300px; overflow-y: auto; padding-right: 5px; border: 1px solid var(--border); border-radius: 8px; padding: 8px; background: rgba(0,0,0,0.2); scrollbar-width: thin; }
+        .q-card { background: var(--surface); border: 1px solid var(--border); padding: 10px; border-radius: 10px; margin-bottom: 8px; }
+        .q-header { display: flex; justify-content: space-between; margin-bottom: 8px; align-items: center; }
+        .q-type { font-size: 0.75rem; background: var(--primary); padding: 2px 6px; border-radius: 4px; }
+        .q-del { background: var(--danger); border: none; color: white; width: 22px; height: 22px; border-radius: 50%; cursor: pointer; display: flex; justify-content: center; align-items: center; }
         
-        .q-media-bar { display: flex; gap: 10px; margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); }
-        .media-btn { flex: 1; position: relative; background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 6px; color: #aaa; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; padding: 8px; transition: 0.2s; font-size: 0.85rem; }
+        .q-media-bar { display: flex; gap: 8px; margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.1); }
+        .media-btn { flex: 1; position: relative; background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 6px; color: #aaa; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; padding: 6px; transition: 0.2s; font-size: 0.8rem; }
         .media-btn:hover { background: rgba(255,255,255,0.05); }
         .media-btn.active { border-color: var(--success); color: var(--success); background: rgba(46, 204, 113, 0.1); }
         
-        .q-input-group { margin-bottom: 8px; }
+        .q-input-group { margin-bottom: 6px; }
         .q-label { font-size: 0.75rem; color: #aaa; margin-bottom: 2px; display: block; }
-        .q-inp { width: 100%; padding: 8px; background: #000; border: 1px solid var(--border); color: white; border-radius: 4px; font-size: 0.9rem; }
+        .q-inp { width: 100%; padding: 6px; background: #000; border: 1px solid var(--border); color: white; border-radius: 4px; font-size: 0.85rem; }
         
-        .add-btn { background: var(--border); border: 1px dashed #888; color: #888; width: 100%; padding: 10px; border-radius: 8px; cursor: pointer; margin-top: 10px; }
+        .add-btn { background: var(--border); border: 1px dashed #888; color: #888; width: 100%; padding: 8px; border-radius: 8px; cursor: pointer; margin-top: 8px; font-size: 0.9rem; }
         .add-btn:hover { background: rgba(255,255,255,0.1); color: white; }
 
-        .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; background: linear-gradient(90deg, #A450F3, #F72585); color: white; font-weight: 600; cursor: pointer; margin-top: 20px; }
-        textarea.code-output { width: 100%; height: 80px; background: #0b0711; border: 1px solid var(--border); color: #888; border-radius: 8px; padding: 10px; resize: none; font-size:11px;}
+        .btn { width: 100%; padding: 10px; border: none; border-radius: 8px; background: linear-gradient(90deg, #A450F3, #F72585); color: white; font-weight: 600; cursor: pointer; margin-top: 15px; font-size: 0.9rem; }
+        textarea.code-output { width: 100%; height: 70px; background: #0b0711; border: 1px solid var(--border); color: #888; border-radius: 8px; padding: 10px; resize: none; font-size:10px; margin-top: 10px; }
     </style>
 </head>
 <body>
 
 <div id="editor-container">
-    <h1>Говорящий аватар: Конструктор Квиза</h1>
+    <h1 id="ui-title">Говорящий аватар: Конструктор Квиза</h1>
     <div class="editor-layout">
         
+        <!-- EDITOR -->
+        <div class="col">
+             <!-- LANGUAGE & AVATAR -->
+            <span class="section-title" id="sec-1">1. Язык и Аватар</span>
+            <div class="row">
+                <select id="inp-lang" onchange="changeLang()">
+                    <option value="ru">🇷🇺 Русский</option>
+                    <option value="en">🇬🇧 English</option>
+                </select>
+                <div style="flex:1; display:flex; align-items:center; gap:5px;">
+                    <span style="font-size:0.8rem" id="lbl-color">Цвет:</span>
+                    <input type="color" id="inp-accent" value="#F72585" style="flex:1;">
+                </div>
+            </div>
+            <label class="custom-file">
+                <span id="label-img">📂 Загрузить Аватар</span>
+                <input type="file" id="inp-img" accept="image/*" class="file-input">
+            </label>
+
+            <span class="section-title" id="sec-2">2. Таймер</span>
+            <div class="row">
+                <label style="display:flex; align-items:center; gap:5px; cursor:pointer;">
+                    <input type="checkbox" id="inp-timer-on"> <span id="lbl-timer">Включить</span>
+                </label>
+                <input type="number" id="inp-timer-min" value="5" min="1" max="30" style="width:70px">
+                <span style="font-size:0.8rem" id="lbl-min">мин.</span>
+            </div>
+
+            <span class="section-title" id="sec-3">3. Вопросы</span>
+            <div id="quest-container"></div>
+            <button class="add-btn" id="btn-add" onclick="addQuest()">+ Добавить вопрос</button>
+        </div>
+
+        <div class="col">
+            <span class="section-title" id="sec-4">4. Финал</span>
+            <div class="q-input-group">
+                <span class="q-label" id="lbl-win">Победа:</span>
+                <input type="text" id="inp-win" value="Молодец! Ты прошел испытание.">
+            </div>
+            <div class="q-input-group">
+                <span class="q-label" id="lbl-lose">Проигрыш:</span>
+                <input type="text" id="inp-lose" value="Игра окончена. Попробуй еще раз.">
+            </div>
+
+            <button id="btn-copy" class="btn">Скопировать код</button>
+            <textarea id="output-code" class="code-output" readonly placeholder="Здесь появится готовый код..."></textarea>
+            
+            <p style="font-size: 0.8rem; color: #888; text-align: center; margin-top:10px;">
+                Этот код идеально подходит для Genially (Insert -> Other).<br>
+                Он адаптирован под размер слайда.
+            </p>
+        </div>
+
         <!-- PREVIEW -->
         <div class="col" style="flex: 1.5;">
             <div id="preview-box">
@@ -115,7 +167,7 @@
                         <div class="chat-header">
                             <div class="header-info">
                                 <img id="prev-img-head" class="header-avatar" src="">
-                                <span>Аватар</span>
+                                <span id="prev-name">Аватар</span>
                             </div>
                             <div id="prev-timer" class="timer-display">00:00</div>
                             <button class="close-btn" onclick="toggleChat()">×</button>
@@ -128,49 +180,9 @@
                     </div>
                 </div>
             </div>
-            <p style="text-align:center; color:#888; font-size:0.9rem; margin-top:5px;">Нажмите на круг, чтобы проверить игру.</p>
+            <p id="preview-hint" style="text-align:center; color:#888; font-size:0.8rem; margin-top:5px;">Нажмите на круг, чтобы проверить.</p>
         </div>
 
-        <!-- EDITOR -->
-        <div class="col">
-            <span class="section-title">1. Аватар и Стиль</span>
-            <div class="row">
-                <label class="custom-file" style="flex:1">
-                    <span id="label-img">📂 Аватар</span>
-                    <input type="file" id="inp-img" accept="image/*" class="file-input">
-                </label>
-                <div style="flex:1">
-                    <span style="font-size:0.8rem">Цвет:</span>
-                    <input type="color" id="inp-accent" value="#F72585">
-                </div>
-            </div>
-
-            <span class="section-title">2. Таймер</span>
-            <div class="row">
-                <label style="display:flex; align-items:center; gap:5px; cursor:pointer;">
-                    <input type="checkbox" id="inp-timer-on"> Включить
-                </label>
-                <input type="number" id="inp-timer-min" placeholder="Мин" value="5" min="1" max="30" style="width:70px">
-                <span style="font-size:0.8rem">мин.</span>
-            </div>
-
-            <span class="section-title">3. Список Вопросов</span>
-            <div id="quest-container"></div>
-            <button class="add-btn" onclick="addQuest()">+ Добавить вопрос</button>
-
-            <span class="section-title">4. Сообщения Финала</span>
-            <div class="q-input-group">
-                <span class="q-label">Победа (все верно):</span>
-                <input type="text" id="inp-win" value="Молодец! Ты прошел испытание.">
-            </div>
-            <div class="q-input-group">
-                <span class="q-label">Проигрыш (ошибка / время вышло):</span>
-                <input type="text" id="inp-lose" value="Игра окончена. Попробуй еще раз.">
-            </div>
-
-            <button id="btn-copy" class="btn">Скопировать код</button>
-            <textarea id="output-code" class="code-output" readonly placeholder="Здесь появится готовый код..."></textarea>
-        </div>
     </div>
 </div>
 
@@ -184,12 +196,43 @@
     const defBot = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23cccccc'%3E%3Cpath d='M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2'/%3E%3C/svg%3E";
     const defUser = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23888888'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E";
 
+    // LANGUAGES
+    const texts = {
+        ru: {
+            title: "Говорящий аватар: Конструктор",
+            s1: "1. Язык и Аватар", s2: "2. Таймер", s3: "3. Вопросы", s4: "4. Финал",
+            col: "Цвет:", up: "📂 Загрузить Аватар", done: "✅ Загружено",
+            tmr: "Включить", min: "мин.",
+            add: "+ Добавить вопрос", win: "Победа:", lose: "Проигрыш:",
+            btn: "Скопировать код", copied: "✅ Скопировано!", hint: "Нажмите на круг, чтобы проверить.",
+            qType: "Тип вопроса:", qText: "✍️ Текст", qChoice: "🔘 Выбор", qQ: "Текст вопроса:",
+            qOpts: "Варианты (через запятую):", qAns: "Правильный ответ:", 
+            mImg: "Фото", mImgOk: "Есть фото", mAud: "Аудио", mAudOk: "Есть аудио",
+            // Widget Defaults
+            wName: "Аватар", wPh: "Ваш ответ...", wWin: "Молодец! Ты прошел испытание.", wLose: "Игра окончена. Попробуй еще раз."
+        },
+        en: {
+            title: "Talking Avatar: Quiz Builder",
+            s1: "1. Language & Avatar", s2: "2. Timer", s3: "3. Questions", s4: "4. Final Messages",
+            col: "Color:", up: "📂 Upload Avatar", done: "✅ Uploaded",
+            tmr: "Enable", min: "min.",
+            add: "+ Add Question", win: "Win Message:", lose: "Lose Message:",
+            btn: "Copy Code", copied: "✅ Copied!", hint: "Click the circle to test.",
+            qType: "Question Type:", qText: "✍️ Text", qChoice: "🔘 Choice", qQ: "Question Text:",
+            qOpts: "Options (comma separated):", qAns: "Correct Answer:", 
+            mImg: "Photo", mImgOk: "Has Photo", mAud: "Audio", mAudOk: "Has Audio",
+            // Widget Defaults
+            wName: "Avatar", wPh: "Your answer...", wWin: "Well done! You passed.", wLose: "Game over. Try again."
+        }
+    };
+
     // BASE64 SOUNDS
-    const sType = "data:audio/wav;base64,UklGRi4AAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAACAgEBAQAAAA=="; // Placeholder click
-    const sClick = "data:audio/wav;base64,UklGRjIAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoAAACAAAAAgAAAAAA="; // Placeholder click
-    const sPing = "data:audio/mp3;base64,//uQZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWgAAAA0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABMmYXbWxpbmUAbXAzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq"; // Placeholder ping
+    const sType = "data:audio/wav;base64,UklGRi4AAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAACAgEBAQAAAA=="; 
+    const sClick = "data:audio/wav;base64,UklGRjIAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoAAACAAAAAgAAAAAA="; 
+    const sPing = "data:audio/mp3;base64,//uQZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWgAAAA0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABMmYXbWxpbmUAbXAzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq"; 
 
     let state = {
+        lang: 'ru',
         avatar: defBot,
         quests: [
             { type: 'text', q: 'Сколько будет 2+2?', a: '4', opts: '', img: null, aud: null },
@@ -208,12 +251,12 @@
         imgInp: document.getElementById('inp-img'),
         prevRing: document.getElementById('prev-img-ring'),
         prevHead: document.getElementById('prev-img-head'),
+        prevName: document.getElementById('prev-name'),
         msgs: document.getElementById('prev-msgs'),
         chatWin: document.getElementById('prev-chat'),
         inpArea: document.getElementById('prev-input-area'),
         userInp: document.getElementById('prev-in'),
         tmrDisplay: document.getElementById('prev-timer'),
-        // settings
         accent: document.getElementById('inp-accent'),
         tmrOn: document.getElementById('inp-timer-on'),
         tmrMin: document.getElementById('inp-timer-min'),
@@ -222,60 +265,83 @@
         code: document.getElementById('output-code'),
         copy: document.getElementById('btn-copy'),
         label: document.getElementById('label-img'),
-        // audio preview
         auType: document.getElementById('prev-aud-type'),
         auClick: document.getElementById('prev-aud-click'),
         auPing: document.getElementById('prev-aud-ping')
     };
 
-    // Setup preview audio
-    els.auType.src = sType;
-    els.auClick.src = sClick;
-    els.auPing.src = sPing;
+    els.auType.src = sType; els.auClick.src = sClick; els.auPing.src = sPing;
+
+    // --- LANGUAGE LOGIC ---
+    window.changeLang = () => {
+        state.lang = document.getElementById('inp-lang').value;
+        const t = texts[state.lang];
+        
+        // Update UI
+        document.getElementById('ui-title').innerText = t.title;
+        document.getElementById('sec-1').innerText = t.s1; document.getElementById('sec-2').innerText = t.s2;
+        document.getElementById('sec-3').innerText = t.s3; document.getElementById('sec-4').innerText = t.s4;
+        document.getElementById('lbl-color').innerText = t.col; document.getElementById('label-img').innerText = state.avatar === defBot ? t.up : t.done;
+        document.getElementById('lbl-timer').innerText = t.tmr; document.getElementById('lbl-min').innerText = t.min;
+        document.getElementById('btn-add').innerText = t.add; 
+        document.getElementById('lbl-win').innerText = t.win; document.getElementById('lbl-lose').innerText = t.lose;
+        els.copy.innerText = t.btn; document.getElementById('preview-hint').innerText = t.hint;
+        
+        // Update Widget Defaults
+        els.msgWin.value = t.wWin; els.msgLose.value = t.wLose;
+        els.prevName.innerText = t.wName; els.userInp.placeholder = t.wPh;
+
+        // Reset Quests text if they are default
+        if(state.quests.length === 2 && state.quests[0].q === 'Сколько будет 2+2?' && state.lang === 'en') {
+             state.quests[0].q = "How much is 2+2?";
+             state.quests[1].q = "Capital of France?"; state.quests[1].a = "Paris"; state.quests[1].opts = "London,Paris,Berlin";
+        }
+
+        renderQuests();
+    };
 
     // --- EDITOR LOGIC ---
     function renderQuests() {
+        const t = texts[state.lang];
         els.questCont.innerHTML = '';
         state.quests.forEach((q, i) => {
             const card = document.createElement('div'); card.className = 'q-card';
             
             // Header
             const head = document.createElement('div'); head.className = 'q-header';
-            head.innerHTML = `<span class="q-type">${q.type === 'text' ? '✍️ Текст' : '🔘 Выбор'}</span>`;
+            head.innerHTML = `<span class="q-type">${q.type === 'text' ? t.qText : t.qChoice}</span>`;
             const delBtn = document.createElement('button'); delBtn.className = 'q-del';
             delBtn.innerHTML = '×'; delBtn.onclick = () => { state.quests.splice(i, 1); renderQuests(); };
             head.appendChild(delBtn);
             card.appendChild(head);
 
             // Type
-            const typeGrp = mkInpGroup('Тип вопроса:');
+            const typeGrp = mkInpGroup(t.qType);
             const sel = document.createElement('select'); sel.className = 'q-inp';
-            sel.innerHTML = `<option value="text">Ввод текста</option><option value="choice">Выбор кнопок</option>`;
+            sel.innerHTML = `<option value="text">${t.qText}</option><option value="choice">${t.qChoice}</option>`;
             sel.value = q.type;
             sel.onchange = (e) => { state.quests[i].type = e.target.value; renderQuests(); };
             typeGrp.appendChild(sel);
             card.appendChild(typeGrp);
 
             // Question
-            const qGrp = mkInpGroup('Текст вопроса:');
+            const qGrp = mkInpGroup(t.qQ);
             const inpQ = document.createElement('input'); inpQ.className = 'q-inp';
             inpQ.value = q.q; inpQ.oninput = (e) => state.quests[i].q = e.target.value;
             qGrp.appendChild(inpQ);
             card.appendChild(qGrp);
 
-            // Media Buttons
+            // Media
             const mBar = document.createElement('div'); mBar.className = 'q-media-bar';
             
-            // Image Upload
             const lbImg = document.createElement('label'); lbImg.className = 'media-btn' + (q.img ? ' active' : '');
-            lbImg.innerHTML = `🖼️ ${q.img ? 'Есть фото' : 'Фото'}`;
+            lbImg.innerHTML = `🖼️ ${q.img ? t.mImgOk : t.mImg}`;
             const fiImg = document.createElement('input'); fiImg.type='file'; fiImg.accept='image/*'; fiImg.className='file-input';
             fiImg.onchange = (e) => updateQuestMedia(i, 'img', e.target.files[0]);
             lbImg.appendChild(fiImg);
             
-            // Audio Upload
             const lbAud = document.createElement('label'); lbAud.className = 'media-btn' + (q.aud ? ' active' : '');
-            lbAud.innerHTML = `🎵 ${q.aud ? 'Есть аудио' : 'Аудио'}`;
+            lbAud.innerHTML = `🎵 ${q.aud ? t.mAudOk : t.mAud}`;
             const fiAud = document.createElement('input'); fiAud.type='file'; fiAud.accept='audio/*'; fiAud.className='file-input';
             fiAud.onchange = (e) => updateQuestMedia(i, 'aud', e.target.files[0]);
             lbAud.appendChild(fiAud);
@@ -283,18 +349,18 @@
             mBar.appendChild(lbImg); mBar.appendChild(lbAud);
             card.appendChild(mBar);
 
-            // Options (if choice)
+            // Options
             if (q.type === 'choice') {
-                const oGrp = mkInpGroup('Варианты (через запятую):');
+                const oGrp = mkInpGroup(t.qOpts);
                 const inpO = document.createElement('input'); inpO.className = 'q-inp';
-                inpO.value = q.opts; inpO.placeholder = "Да,Нет,Возможно";
+                inpO.value = q.opts; inpO.placeholder = state.lang==='ru' ? "Да,Нет" : "Yes,No";
                 inpO.oninput = (e) => state.quests[i].opts = e.target.value;
                 oGrp.appendChild(inpO);
                 card.appendChild(oGrp);
             }
 
             // Answer
-            const aGrp = mkInpGroup('Правильный ответ (точно):');
+            const aGrp = mkInpGroup(t.qAns);
             const inpA = document.createElement('input'); inpA.className = 'q-inp';
             inpA.value = q.a; inpA.oninput = (e) => state.quests[i].a = e.target.value;
             aGrp.appendChild(inpA);
@@ -319,10 +385,7 @@
         if(!file) return;
         if(file.size > 2*1024*1024) { alert("Файл слишком большой (>2MB)"); return; }
         const r = new FileReader();
-        r.onload = v => {
-            state.quests[idx][type] = v.target.result;
-            renderQuests(); 
-        };
+        r.onload = v => { state.quests[idx][type] = v.target.result; renderQuests(); };
         r.readAsDataURL(file);
     };
 
@@ -334,7 +397,7 @@
                 state.avatar = v.target.result;
                 els.prevRing.src = state.avatar;
                 els.prevHead.src = state.avatar;
-                els.label.innerText = "✅ Фото загружено";
+                els.label.innerText = texts[state.lang].done;
                 if(state.chatOpen) startSim();
             };
             r.readAsDataURL(f);
@@ -346,8 +409,7 @@
     // --- PREVIEW LOGIC ---
     function playPrevSound(type) {
         const a = type===1 ? els.auClick : (type===2 ? els.auPing : els.auType);
-        a.currentTime = 0;
-        a.play().catch(e=>{});
+        a.currentTime = 0; a.play().catch(e=>{});
     }
 
     window.toggleChat = () => {
@@ -385,13 +447,11 @@
         } else {
             els.tmrDisplay.style.display = 'none';
         }
-
         nextQ();
     }
 
     function updTimerDisplay() {
-        const m = Math.floor(state.timerVal/60);
-        const s = state.timerVal%60;
+        const m = Math.floor(state.timerVal/60), s = state.timerVal%60;
         els.tmrDisplay.innerText = (m<10?'0'+m:m) + ":" + (s<10?'0'+s:s);
     }
 
@@ -403,16 +463,13 @@
             els.inpArea.style.display = 'none';
             return;
         }
-
         const q = state.quests[state.qIndex];
-        // Pass media to addMsg
         addMsg('bot', q.q, q.img, q.aud);
         
         if(q.type === 'choice') {
             els.inpArea.style.display = 'none';
             const div = document.createElement('div'); div.className='opt-row';
-            const opts = q.opts.split(',');
-            opts.forEach(o => {
+            q.opts.split(',').forEach(o => {
                 const b = document.createElement('button'); b.className='opt-btn'; b.innerText = o.trim();
                 b.onclick = () => handleAns(o.trim());
                 div.appendChild(b);
@@ -433,9 +490,7 @@
 
     function handleAns(ans) {
         if(!state.gameActive) return;
-        
-        playPrevSound(3); 
-        addMsg('user', ans);
+        playPrevSound(3); addMsg('user', ans);
         
         const old = els.msgs.querySelectorAll('.opt-row');
         old.forEach(b => b.remove());
@@ -454,18 +509,14 @@
 
     function addMsg(role, txt, img, aud) {
         if(role === 'bot') playPrevSound(2);
-
         const d = document.createElement('div'); d.className=`message msg-${role}`;
         const im = document.createElement('img'); im.className='msg-avatar'; im.src = role==='bot'?state.avatar:defUser;
-        
         const cont = document.createElement('div'); cont.className = 'bubble-cont';
-        
         const b = document.createElement('div'); b.className='bubble';
         if(role==='user') b.style.background = els.accent.value;
         b.innerText = txt;
         cont.appendChild(b);
 
-        // Display Media in Preview
         if(img) {
             const md = document.createElement('div'); md.className='chat-media';
             md.innerHTML = `<img src="${img}">`;
@@ -484,30 +535,27 @@
     }
 
     els.accent.oninput = () => document.querySelector('.send-btn').style.background = els.accent.value;
-    renderQuests();
-
+    
     // --- GENERATOR ---
     els.copy.onclick = () => {
         const code = generateCode();
-        els.code.value = code;
-        els.code.select();
+        els.code.value = code; els.code.select();
         document.execCommand('copy');
-        els.copy.innerText = "✅ Скопировано!";
-        setTimeout(() => els.copy.innerText = "Скопировать код", 2000);
+        els.copy.innerText = texts[state.lang].copied;
+        setTimeout(() => els.copy.innerText = texts[state.lang].btn, 2000);
     };
 
     function generateCode() {
         const uid = "quiz-" + Math.random().toString(36).substr(2,6);
+        const t = texts[state.lang];
         const data = {
-            av: state.avatar,
-            us: defUser,
-            col: els.accent.value,
-            qs: state.quests,
-            tmr: els.tmrOn.checked,
+            av: state.avatar, us: defUser, col: els.accent.value,
+            qs: state.quests, tmr: els.tmrOn.checked,
             time: parseInt(els.tmrMin.value) * 60,
-            win: els.msgWin.value,
-            lose: els.msgLose.value,
-            sClick: sClick, sPing: sPing, sType: sType
+            win: els.msgWin.value, lose: els.msgLose.value,
+            sClick: sClick, sPing: sPing, sType: sType,
+            // UI Strings for Widget
+            uiName: t.wName, uiPh: t.wPh
         };
 
         return `
@@ -541,9 +589,10 @@
 #${uid} .bot .txt { background:rgba(255,255,255,0.1); border-bottom-left-radius:2px; }
 #${uid} .usr .txt { background:${data.col}; color:#fff; border-bottom-right-radius:2px; }
 
-#${uid} .med { border-radius:8px; overflow:hidden; border:1px solid rgba(255,255,255,0.2); margin-top:4px; }
-#${uid} .med img { width:100%; display:block; }
-#${uid} audio { width:100%; height:30px; margin-top:4px; }
+/* FIXED MEDIA SIZING IN WIDGET */
+#${uid} .med { border-radius:8px; overflow:hidden; border:1px solid rgba(255,255,255,0.2); margin-top:4px; max-width:200px; width:100%; }
+#${uid} .med img { width:100%; height:auto; max-height:150px; object-fit:contain; display:block; background:#000; }
+#${uid} audio { width:100%; max-width:200px; height:30px; margin-top:4px; }
 
 #${uid} .opts { display:flex; flex-wrap:wrap; gap:6px; margin-left:34px; margin-top:-5px; }
 #${uid} .btn-o { background:transparent; border:1px solid ${data.col}; color:white; padding:6px 12px; border-radius:15px; cursor:pointer; font-size:12px; }
@@ -559,13 +608,13 @@
     <div class="ring" id="r-${uid}"><img src="${data.av}"></div>
     <div class="win" id="w-${uid}">
         <div class="head">
-            <div class="prof"><img src="${data.av}"><span>Аватар</span></div>
+            <div class="prof"><img src="${data.av}"><span>${data.uiName}</span></div>
             <div class="tmr" id="t-${uid}">00:00</div>
             <button class="cls" id="c-${uid}">×</button>
         </div>
         <div class="logs" id="l-${uid}"></div>
         <div class="inp" id="ia-${uid}">
-            <input type="text" id="i-${uid}" placeholder="Ответ...">
+            <input type="text" id="i-${uid}" placeholder="${data.uiPh}">
             <button class="snd" id="s-${uid}"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
         </div>
     </div>
@@ -661,6 +710,11 @@
 </body>
 </html>`;
     }
+
+    // Init
+    changeLang();
 </script>
 </body>
 </html>
+          
+    
