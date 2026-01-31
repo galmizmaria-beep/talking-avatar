@@ -65,12 +65,12 @@
             justify-content: center;
             align-items: center;
             position: relative;
-            /* Фон превью */
+            /* Фон и рамка задаются через JS при старте */
             background-color: #120C1C; 
-            border: 1px solid #3A2E59; /* Исходный цвет рамки */
+            border: 1px solid #3A2E59; 
             border-radius: 20px;
             overflow: hidden;
-            transition: border-color 0.3s;
+            transition: all 0.3s;
         }
 
         .preview-content {
@@ -91,7 +91,6 @@
             justify-content: center;
             align-items: center;
             transition: all 0.3s ease;
-            /* Начальный размер для превью */
             width: 200px;
             height: 200px;
         }
@@ -297,6 +296,9 @@
             <span class="label-text">Интенсивность свечения:</span>
             <input type="range" id="rng-glow" min="10" max="50" value="20" style="width:100%">
 
+            <span class="label-text">Цвет фона виджета:</span>
+            <input type="color" id="inp-bg-color" value="#120C1C">
+
             <span class="label-text">Цвет рамки виджета:</span>
             <input type="color" id="inp-border-color" value="#3A2E59">
         </div>
@@ -318,11 +320,12 @@
         prevImg: document.getElementById('prev-img'),
         prevPlace: document.getElementById('prev-placeholder'),
         prevRing: document.getElementById('prev-ring'),
-        prevBox: document.getElementById('preview-box'), // Сам ящик предпросмотра
+        prevBox: document.getElementById('preview-box'), 
         audio: document.getElementById('main-audio'),
         btnPlay: document.getElementById('prev-b-play'),
-        color: document.getElementById('inp-color'),
-        borderColor: document.getElementById('inp-border-color'), // Цвет рамки
+        color: document.getElementById('inp-color'), // Свечение
+        borderColor: document.getElementById('inp-border-color'), // Рамка
+        bgColor: document.getElementById('inp-bg-color'), // Фон
         glow: document.getElementById('rng-glow'),
         size: document.getElementById('rng-size'),
         outCode: document.getElementById('output-code'),
@@ -364,18 +367,20 @@
         const glowSize = els.glow.value;
         const sizeVal = els.size.value;
         const bordColor = els.borderColor.value;
+        const bgColor = els.bgColor.value;
         
-        // 1. Обновляем размер кольца в превью (масштабирование для визуализации)
+        // 1. Размер кольца
         const pxSize = (sizeVal / 100) * 350; 
         els.prevRing.style.width = pxSize + 'px';
         els.prevRing.style.height = pxSize + 'px';
 
-        // 2. Обновляем свечение (видно всегда в редакторе)
+        // 2. Свечение
         els.prevRing.style.boxShadow = `0 0 ${glowSize}px ${color}, inset 0 0 ${glowSize/2}px ${color}`;
         els.prevRing.style.borderColor = color;
 
-        // 3. Обновляем цвет рамки контейнера предпросмотра
+        // 3. Рамка и фон предпросмотра
         els.prevBox.style.borderColor = bordColor;
+        els.prevBox.style.backgroundColor = bgColor;
     };
 
     // Play/Pause logic for Preview
@@ -400,7 +405,7 @@
     };
 
     // Listeners
-    [els.color, els.glow, els.size, els.borderColor].forEach(el => el.oninput = updatePreview);
+    [els.color, els.glow, els.size, els.borderColor, els.bgColor].forEach(el => el.oninput = updatePreview);
     updatePreview();
 
     // --- HTML GENERATOR ---
@@ -414,11 +419,11 @@
         const glowSize = els.glow.value;
         const sizeVal = els.size.value;
         const bordColor = els.borderColor.value;
+        const bgColor = els.bgColor.value;
         
         const uid = "gen-" + Math.random().toString(36).substr(2, 6);
 
-        // Мы добавляем стили для body/container, чтобы это выглядело как карточка
-        // Background: #120C1C (фиксированный), Border: меняется пользователем
+        // Мы добавляем стили для body/container
         return `
 <!DOCTYPE html>
 <html>
@@ -436,9 +441,9 @@
         font-family: sans-serif;
         box-sizing: border-box;
         
-        /* Стилизация карточки */
-        background-color: #120C1C; 
-        border: 1px solid ${bordColor}; /* Цвет от пользователя */
+        /* Стилизация карточки: фон и рамка от пользователя */
+        background-color: ${bgColor}; 
+        border: 1px solid ${bordColor};
         border-radius: 20px;
         padding: 10px;
     }
@@ -449,7 +454,6 @@
         /* Размер зависит от ползунка (vmin - % от меньшей стороны экрана) */
         width: ${sizeVal}vmin; 
         height: ${sizeVal}vmin;
-        /* Максимальные ограничения, чтобы не вылезало на ПК */
         max-width: 80vh;
         max-height: 80vh;
         
