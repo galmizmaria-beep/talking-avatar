@@ -1,1 +1,268 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Редактор Говорящего Аватара для Genially</title>
+    
+    <!-- Стили CSS встроены прямо сюда -->
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .main-container {
+            max-width: 900px;
+            width: 100%;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            text-align: center;
+            color: #1a2c5b;
+        }
+        .editor-layout {
+            display: flex;
+            flex-wrap: wrap; /* Для адаптивности на маленьких экранах */
+            gap: 30px;
+            margin-top: 20px;
+        }
+        .preview-column, .settings-column {
+            flex: 1;
+            min-width: 300px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        #preview-area {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 350px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        #avatar-container {
+            transition: all 0.3s ease;
+        }
+        #avatar-image {
+            border-radius: 50%;
+            object-fit: cover;
+            width: 100%;
+            height: 100%;
+            transition: box-shadow 0.3s ease-in-out;
+        }
+        .player-controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+        .player-controls button {
+            font-size: 1.5rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+        .settings-column label {
+            display: block;
+            margin-top: 15px;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .settings-column input[type="file"],
+        .settings-column input[type="range"],
+        .settings-column input[type="color"] {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        .code-generation {
+            margin-top: 30px;
+            text-align: center;
+        }
+        #get-code-btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+        #get-code-btn:hover {
+            background-color: #45a049;
+        }
+        #generated-code {
+            width: 100%;
+            height: 150px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            resize: vertical;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <h1>Редактор Говорящего Аватара</h1>
+        <div class="editor-layout">
+            <!-- Левая колонка: Предпросмотр -->
+            <div class="preview-column">
+                <h2>Предпросмотр</h2>
+                <div id="preview-area">
+                    <div id="avatar-container">
+                        <img id="avatar-image" src="https://via.placeholder.com/150" alt="Аватар">
+                    </div>
+                </div>
+                <div class="player-controls">
+                    <audio id="audio-player"></audio>
+                    <button id="btn-play-pause">▶️</button>
+                    <button id="btn-stop">⏹️</button>
+                    <button id="btn-backward">⏪</button>
+                    <button id="btn-forward">⏩</button>
+                </div>
+            </div>
+            <!-- Правая колонка: Настройки -->
+            <div class="settings-column">
+                <h2>Настройки</h2>
+                <label for="image-upload">1. Загрузите изображение аватара:</label>
+                <input type="file" id="image-upload" accept="image/*">
+                <label for="audio-upload">2. Загрузите аудиофайл (mp3, wav):</label>
+                <input type="file" id="audio-upload" accept="audio/*">
+                <label for="size-slider">3. Размер аватара:</label>
+                <input type="range" id="size-slider" min="50" max="300" value="150">
+                <span id="size-value">150px</span>
+                <label for="glow-color">4. Цвет свечения при разговоре:</label>
+                <input type="color" id="glow-color" value="#00ffff">
+            </div>
+        </div>
+        <!-- Секция генерации кода -->
+        <div class="code-generation">
+            <button id="get-code-btn">Получить код для Genially</button>
+            <textarea id="generated-code" readonly placeholder="Здесь появится HTML-код для вставки в Genially..."></textarea>
+        </div>
+    </div>
 
+    <!-- Весь JavaScript-код вставлен прямо сюда -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const imageUpload = document.getElementById('image-upload');
+            const audioUpload = document.getElementById('audio-upload');
+            const sizeSlider = document.getElementById('size-slider');
+            const sizeValue = document.getElementById('size-value');
+            const glowColorInput = document.getElementById('glow-color');
+            const getCodeBtn = document.getElementById('get-code-btn');
+            const generatedCode = document.getElementById('generated-code');
+            const avatarContainer = document.getElementById('avatar-container');
+            const avatarImage = document.getElementById('avatar-image');
+            const audioPlayer = document.getElementById('audio-player');
+            const btnPlayPause = document.getElementById('btn-play-pause');
+            const btnStop = document.getElementById('btn-stop');
+            const btnBackward = document.getElementById('btn-backward');
+            const btnForward = document.getElementById('btn-forward');
+
+            let imageDataUrl = '';
+            let audioDataUrl = '';
+
+            const readFileAsDataURL = (file) => {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(file);
+                });
+            };
+
+            imageUpload.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    imageDataUrl = await readFileAsDataURL(file);
+                    avatarImage.src = imageDataUrl;
+                }
+            });
+
+            audioUpload.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    audioDataUrl = await readFileAsDataURL(file);
+                    audioPlayer.src = audioDataUrl;
+                }
+            });
+
+            sizeSlider.addEventListener('input', (e) => {
+                const size = e.target.value;
+                avatarContainer.style.width = `${size}px`;
+                avatarContainer.style.height = `${size}px`;
+                sizeValue.textContent = `${size}px`;
+            });
+            sizeSlider.dispatchEvent(new Event('input'));
+
+            btnPlayPause.addEventListener('click', () => {
+                if (audioPlayer.paused) { audioPlayer.play(); btnPlayPause.textContent = '⏸️'; }
+                else { audioPlayer.pause(); btnPlayPause.textContent = '▶️'; }
+            });
+            btnStop.addEventListener('click', () => { audioPlayer.pause(); audioPlayer.currentTime = 0; btnPlayPause.textContent = '▶️'; });
+            btnBackward.addEventListener('click', () => { audioPlayer.currentTime = Math.max(0, audioPlayer.currentTime - 5); });
+            btnForward.addEventListener('click', () => { audioPlayer.currentTime += 5; });
+            audioPlayer.addEventListener('ended', () => { btnPlayPause.textContent = '▶️'; });
+
+            getCodeBtn.addEventListener('click', () => {
+                if (!imageDataUrl || !audioDataUrl) {
+                    alert('Пожалуйста, загрузите изображение и аудиофайл.');
+                    return;
+                }
+                const size = sizeSlider.value;
+                const glowColor = glowColorInput.value;
+                
+                // ВАЖНО: </script> внутри строки JS нужно экранировать как <\/script>, чтобы браузер не сломался.
+                const widgetCode = `
+<div id="genially-avatar-container" style="cursor: pointer; position: relative; width: ${size}px; height: ${size}px; background: transparent;">
+    <img id="genially-avatar-img" src="${imageDataUrl}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; transition: box-shadow 0.4s ease-in-out;">
+</div>
+<style>
+    @keyframes talking-glow { 0% { box-shadow: 0 0 5px 2px ${glowColor}00; } 50% { box-shadow: 0 0 25px 8px ${glowColor}CC; } 100% { box-shadow: 0 0 5px 2px ${glowColor}00; } }
+    #genially-avatar-img.speaking { animation: talking-glow 1.5s infinite; }
+</style>
+<script>
+    (function() {
+        const container = document.getElementById('genially-avatar-container');
+        if (container) {
+            const img = document.getElementById('genially-avatar-img');
+            const audio = new Audio("${audioDataUrl}");
+            let isPlaying = false;
+            
+            container.addEventListener('click', () => { 
+                if (isPlaying) {
+                    audio.pause();
+                } else {
+                    audio.play();
+                }
+            });
+            audio.addEventListener('play', () => { isPlaying = true; img.classList.add('speaking'); });
+            audio.addEventListener('pause', () => { isPlaying = false; img.classList.remove('speaking'); audio.currentTime = 0; });
+            audio.addEventListener('ended', () => { isPlaying = false; img.classList.remove('speaking'); });
+        }
+    })();
+<\/script>`;
+                generatedCode.value = widgetCode.trim();
+                generatedCode.select();
+                document.execCommand('copy');
+                alert('Код сгенерирован и скопирован в буфер обмена! Просто вставьте его в Genially.');
+            });
+        });
+    </script>
+</body>
+</html>
