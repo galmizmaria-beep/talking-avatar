@@ -3,29 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Говорящий аватар: Сценарий Задания</title>
+    <title>Говорящий аватар: Конструктор Квиза</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root { --bg: #120C1C; --surface: #1E1234; --primary: #A450F3; --accent: #F72585; --text: #EAE2FF; --border: #3A2E59; --input-bg: #0b0711; }
+        :root { --bg: #120C1C; --surface: #1E1234; --primary: #A450F3; --accent: #F72585; --text: #EAE2FF; --border: #3A2E59; --input-bg: #0b0711; --danger: #ff4757; }
         * { box-sizing: border-box; }
         body { font-family: 'Poppins', sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
         
-        #editor-container { max-width: 1100px; width: 100%; background-color: var(--surface); padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid var(--border); }
+        #editor-container { max-width: 1200px; width: 100%; background-color: var(--surface); padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid var(--border); }
         h1 { text-align: center; margin-bottom: 30px; text-shadow: 0 0 10px var(--accent); }
         .editor-layout { display: flex; flex-wrap: wrap; gap: 30px; }
         .col { flex: 1; min-width: 350px; display: flex; flex-direction: column; gap: 15px; }
         
-        /* Preview */
+        /* Preview Area */
         #preview-box {
             position: relative;
             background-image: linear-gradient(45deg, #181818 25%, transparent 25%), linear-gradient(-45deg, #181818 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #181818 75%), linear-gradient(-45deg, transparent 75%, #181818 75%);
             background-size: 20px 20px; background-color: #222; border: 1px dashed #555; border-radius: 20px;
-            overflow: hidden; width: 100%; height: 600px; display: flex; justify-content: center; align-items: center;
+            overflow: hidden; width: 100%; height: 650px; display: flex; justify-content: center; align-items: center;
         }
-        
         .widget-wrapper { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; position: relative; }
-        
-        /* Chat UI Styles (Matches generated code) */
+
+        /* WIDGET STYLES (Shared) */
         .avatar-ring { width: 100px; height: 100px; border-radius: 50%; border: 3px solid var(--border); background: var(--bg); cursor: pointer; position: absolute; z-index: 10; display: flex; justify-content: center; align-items: center; transition: 0.3s; }
         .avatar-ring:hover { transform: scale(1.05); }
         .avatar-ring img { width: 90%; height: 90%; border-radius: 50%; object-fit: cover; }
@@ -33,30 +32,25 @@
         .chat-window { width: 90%; height: 95%; background: var(--bg); border: 1px solid var(--border); border-radius: 20px; display: flex; flex-direction: column; position: absolute; z-index: 20; opacity: 0; pointer-events: none; transform: scale(0.9); transition: all 0.3s; box-shadow: 0 10px 50px rgba(0,0,0,0.7); }
         .chat-window.open { opacity: 1; pointer-events: all; transform: scale(1); }
         
-        .chat-header { padding: 15px; background: rgba(255,255,255,0.05); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-        .header-info { display: flex; align-items: center; gap: 10px; font-weight: 600; }
-        .header-avatar { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; }
+        .chat-header { padding: 12px; background: rgba(255,255,255,0.05); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .header-info { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 14px; }
+        .header-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
+        .timer-display { font-family: monospace; font-size: 14px; background: #000; padding: 2px 6px; border-radius: 4px; color: var(--accent); display: none; }
         .close-btn { background: none; border: none; color: #aaa; cursor: pointer; font-size: 24px; line-height: 1; }
         
         .chat-messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
         .message { display: flex; align-items: flex-end; gap: 8px; max-width: 90%; }
         .msg-avatar { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
         .bubble { padding: 10px 14px; border-radius: 18px; font-size: 0.9rem; line-height: 1.4; word-wrap: break-word; }
-        
         .msg-bot { align-self: flex-start; }
         .msg-bot .bubble { background: rgba(255,255,255,0.1); border-bottom-left-radius: 2px; }
         .msg-user { align-self: flex-end; flex-direction: row-reverse; }
         .msg-user .bubble { background: var(--accent); color: white; border-bottom-right-radius: 2px; }
         
-        .chat-media { margin-top: 8px; border-radius: 10px; overflow: hidden; max-width: 100%; border: 1px solid rgba(255,255,255,0.2); }
-        .chat-media img { width: 100%; height: auto; display: block; }
-        .chat-audio { width: 100%; margin-top: 5px; height: 30px; }
-
-        .choice-btns { display: flex; gap: 10px; margin-top: 5px; margin-left: 36px; }
-        .choice-btn { padding: 8px 20px; border-radius: 20px; border: 1px solid var(--accent); background: transparent; color: white; cursor: pointer; transition: 0.2s; font-size: 0.9rem; }
-        .choice-btn:hover { background: var(--accent); }
-        .choice-btn.no { border-color: #666; }
-        .choice-btn.no:hover { background: #666; }
+        /* Options Buttons */
+        .opt-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 5px; margin-left: 36px; }
+        .opt-btn { background: transparent; border: 1px solid var(--accent); color: white; padding: 6px 12px; border-radius: 15px; cursor: pointer; font-size: 0.85rem; transition: 0.2s; }
+        .opt-btn:hover { background: var(--accent); }
 
         .chat-input-area { padding: 15px; background: rgba(0,0,0,0.2); border-top: 1px solid var(--border); display: flex; gap: 10px; }
         .chat-input { flex: 1; background: var(--input-bg); border: 1px solid var(--border); border-radius: 20px; padding: 10px 15px; color: white; outline: none; }
@@ -64,28 +58,41 @@
         .send-btn:hover { transform: scale(1.1); }
         .send-btn svg { width: 18px; fill: white; margin-left: 2px; }
 
-        /* Settings */
-        .custom-file { padding: 12px; background: rgba(0,0,0,0.2); border: 1px dashed var(--border); text-align: center; cursor: pointer; border-radius: 8px; position: relative; margin-bottom: 10px; display:flex; flex-direction: column; align-items: center; gap: 5px; }
+        /* --- Editor UI --- */
+        .custom-file { padding: 10px; background: rgba(0,0,0,0.2); border: 1px dashed var(--border); text-align: center; cursor: pointer; border-radius: 8px; position: relative; display:flex; flex-direction:column; align-items:center; }
         .file-input { position: absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; }
         
-        input[type="text"], textarea { width: 100%; padding: 10px; background: var(--input-bg); border: 1px solid var(--border); border-radius: 8px; color: white; font-family: inherit; }
+        input[type="text"], input[type="number"] { width: 100%; padding: 10px; background: var(--input-bg); border: 1px solid var(--border); border-radius: 8px; color: white; font-family: inherit; }
         input[type="color"] { width: 100%; height: 40px; border: none; background: none; cursor: pointer; }
         
-        .section-title { font-weight: 600; color: var(--primary); margin-top: 15px; display: block; border-bottom: 1px solid var(--border); padding-bottom: 5px; margin-bottom: 10px; }
+        .section-title { font-weight: 600; color: var(--primary); margin-top: 10px; display: block; border-bottom: 1px solid var(--border); padding-bottom: 5px; margin-bottom: 10px; }
+        .row { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
         
+        /* Quest Builder */
+        #quest-container { max-height: 400px; overflow-y: auto; padding-right: 5px; border: 1px solid var(--border); border-radius: 8px; padding: 10px; background: rgba(0,0,0,0.2); }
+        .q-card { background: var(--surface); border: 1px solid var(--border); padding: 15px; border-radius: 10px; margin-bottom: 10px; position: relative; }
+        .q-header { display: flex; justify-content: space-between; margin-bottom: 10px; align-items: center; }
+        .q-type { font-size: 0.8rem; background: var(--primary); padding: 2px 6px; border-radius: 4px; }
+        .q-del { background: var(--danger); border: none; color: white; width: 24px; height: 24px; border-radius: 50%; cursor: pointer; display: flex; justify-content: center; align-items: center; }
+        
+        .q-input-group { margin-bottom: 8px; }
+        .q-label { font-size: 0.75rem; color: #aaa; margin-bottom: 2px; display: block; }
+        .q-inp { width: 100%; padding: 8px; background: #000; border: 1px solid var(--border); color: white; border-radius: 4px; font-size: 0.9rem; }
+        
+        .add-btn { background: var(--border); border: 1px dashed #888; color: #888; width: 100%; padding: 10px; border-radius: 8px; cursor: pointer; margin-top: 10px; }
+        .add-btn:hover { background: rgba(255,255,255,0.1); color: white; }
+
         .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; background: linear-gradient(90deg, #A450F3, #F72585); color: white; font-weight: 600; cursor: pointer; margin-top: 20px; }
-        
         textarea.code-output { width: 100%; height: 80px; background: #0b0711; border: 1px solid var(--border); color: #888; border-radius: 8px; padding: 10px; resize: none; font-size:11px;}
-        .hint { font-size: 0.8rem; color: #aaa; }
-        .status-ok { color: #4ade80; font-weight: bold; font-size: 0.8rem; }
     </style>
 </head>
 <body>
 
 <div id="editor-container">
-    <h1>Говорящий аватар: Конструктор заданий</h1>
+    <h1>Говорящий аватар: Конструктор Квиза</h1>
     <div class="editor-layout">
-        <!-- Preview -->
+        
+        <!-- PREVIEW -->
         <div class="col" style="flex: 1.5;">
             <div id="preview-box">
                 <div class="widget-wrapper">
@@ -98,60 +105,58 @@
                                 <img id="prev-img-head" class="header-avatar" src="">
                                 <span>Аватар</span>
                             </div>
+                            <div id="prev-timer" class="timer-display">00:00</div>
                             <button class="close-btn" onclick="toggleChat()">×</button>
                         </div>
                         <div class="chat-messages" id="prev-msgs"></div>
-                        <div class="chat-input-area">
-                            <input type="text" class="chat-input" id="prev-in" placeholder="Напиши ответ...">
+                        <div class="chat-input-area" id="prev-input-area">
+                            <input type="text" class="chat-input" id="prev-in" placeholder="Ваш ответ...">
                             <button class="send-btn" onclick="simSend()"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
                         </div>
                     </div>
                 </div>
             </div>
-            <p style="text-align:center; color:#888; font-size:0.9rem; margin-top:5px;">Нажмите на круг, чтобы проверить сценарий.</p>
+            <p style="text-align:center; color:#888; font-size:0.9rem; margin-top:5px;">Нажмите на круг, чтобы начать тест.</p>
         </div>
 
-        <!-- Settings -->
+        <!-- EDITOR -->
         <div class="col">
-            <span class="section-title">1. Настройка Аватара</span>
-            <label class="custom-file">
-                <span id="label-img">📂 Загрузить Аватар</span>
-                <input type="file" id="inp-img" accept="image/*" class="file-input">
-            </label>
-            <span style="font-weight:600">Цвет сообщений:</span>
-            <input type="color" id="inp-accent" value="#F72585">
+            <span class="section-title">1. Аватар и Стиль</span>
+            <div class="row">
+                <label class="custom-file" style="flex:1">
+                    <span id="label-img">📂 Аватар</span>
+                    <input type="file" id="inp-img" accept="image/*" class="file-input">
+                </label>
+                <div style="flex:1">
+                    <span style="font-size:0.8rem">Цвет:</span>
+                    <input type="color" id="inp-accent" value="#F72585">
+                </div>
+            </div>
 
-            <span class="section-title">2. Сценарий: Старт</span>
-            <span style="font-weight:600">Вопрос "Готовность":</span>
-            <input type="text" id="inp-q-ready" value="Ты готов выполнить задание?">
-            
-            <span class="section-title">3. Сценарий: Ответ "Нет"</span>
-            <span style="font-weight:600">Сообщение жалости:</span>
-            <input type="text" id="inp-msg-sorry" value="Мне очень жаль. Возвращайся, когда будешь готов!">
+            <span class="section-title">2. Таймер</span>
+            <div class="row">
+                <label style="display:flex; align-items:center; gap:5px; cursor:pointer;">
+                    <input type="checkbox" id="inp-timer-on"> Включить
+                </label>
+                <input type="number" id="inp-timer-min" placeholder="Мин" value="5" min="1" max="30" style="width:70px">
+                <span style="font-size:0.8rem">мин.</span>
+            </div>
 
-            <span class="section-title">4. Сценарий: Ответ "Да" (Задание)</span>
-            <span style="font-weight:600">Текст задания:</span>
-            <textarea id="inp-msg-task" style="height: 80px" placeholder="Опишите, что нужно сделать...">Послушай аудио и посмотри на картинку. Напиши, что ты видишь?</textarea>
+            <span class="section-title">3. Список Вопросов</span>
+            <div id="quest-container">
+                <!-- Dynamic Questions -->
+            </div>
+            <button class="add-btn" onclick="addQuest()">+ Добавить вопрос</button>
 
-            <label class="custom-file" style="border-color: #A450F3;">
-                <span>🖼️ Картинка задания (необязательно)</span>
-                <input type="file" id="inp-task-img" accept="image/*" class="file-input">
-                <div id="st-task-img" class="status-ok"></div>
-            </label>
-
-            <label class="custom-file" style="border-color: #A450F3;">
-                <span>🎵 Аудио задания (необязательно)</span>
-                <input type="file" id="inp-task-aud" accept="audio/*" class="file-input">
-                <div id="st-task-aud" class="status-ok"></div>
-            </label>
-
-            <span class="section-title">5. Проверка ответов (Словарь)</span>
-            <div class="hint">Пары: <b>Ответ ученика - Реакция аватара</b></div>
-            <textarea id="inp-dict" style="height: 100px; font-family: monospace" placeholder="Кот - Правильно! Это кот.
-Собака - Верно, это собака."></textarea>
-            
-            <span style="font-weight:600">Если ответ не совпал:</span>
-            <input type="text" id="inp-unknown" value="Не совсем так. Попробуй еще раз.">
+            <span class="section-title">4. Сообщения Финала</span>
+            <div class="q-input-group">
+                <span class="q-label">Победа (все верно):</span>
+                <input type="text" id="inp-win" value="Молодец! Ты прошел испытание.">
+            </div>
+            <div class="q-input-group">
+                <span class="q-label">Проигрыш (ошибка / время вышло):</span>
+                <input type="text" id="inp-lose" value="Игра окончена. Попробуй еще раз.">
+            </div>
 
             <button id="btn-copy" class="btn">Скопировать код</button>
             <textarea id="output-code" class="code-output" readonly placeholder="Здесь появится готовый код..."></textarea>
@@ -160,210 +165,242 @@
 </div>
 
 <script>
-    // Embedded Sounds (Base64) - Short & Lightweight
-    const sndPop = "data:audio/mp3;base64,//uQZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWgAAAA0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABMmYXbWxpbmUAbXAzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//uQZAAP8AAAaQAAAAgAAA0gAAABAAABpAAAACAAADSAAAAEqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq"; 
-    // Real short click sound
-    const realClick = "data:audio/wav;base64,UklGRi4AAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAACAgEBAQAAAA==";
-    // Real short notification
-    const realPing = "data:audio/wav;base64,UklGRjQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQcAAAAAAP8A/wD/AP8A/wD/AP8AAA=="; 
-
-    // Используем нормальные звуки для функционала (короткие бипы)
-    const audioSend = "data:audio/wav;base64,UklGRlIAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoAAACAAAAAgAAAAACAAAAAgAAAAICAAIAAgIDAwMDA3t7e3qCgoKDf39/fAA=="; // Typewriter click sim
-    const audioRecv = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQQAAAAAAA=="; // Ping sim
-
-    // Default Assets
+    // --- DATA ---
     const defBot = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23cccccc'%3E%3Cpath d='M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2'/%3E%3C/svg%3E";
     const defUser = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23888888'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E";
 
+    let state = {
+        avatar: defBot,
+        accent: "#F72585",
+        quests: [
+            { type: 'text', q: 'Сколько будет 2+2?', a: '4', opts: '' },
+            { type: 'choice', q: 'Столица Франции?', a: 'Париж', opts: 'Лондон,Париж,Берлин' }
+        ],
+        timerEnabled: false,
+        timerMin: 5,
+        msgWin: "Молодец! Ты прошел испытание.",
+        msgLose: "Игра окончена. Попробуй еще раз.",
+        
+        // Sim state
+        chatOpen: false,
+        currentQIndex: 0,
+        gameActive: false
+    };
+
+    // --- UI ELEMENTS ---
     const els = {
-        imgRing: document.getElementById('prev-img-ring'),
-        imgHead: document.getElementById('prev-img-head'),
-        chatWin: document.getElementById('prev-chat'),
+        questCont: document.getElementById('quest-container'),
+        imgInp: document.getElementById('inp-img'),
+        prevRing: document.getElementById('prev-img-ring'),
+        prevHead: document.getElementById('prev-img-head'),
         msgs: document.getElementById('prev-msgs'),
-        inp: document.getElementById('prev-in'),
-        // Inputs
-        file: document.getElementById('inp-img'),
-        taskImg: document.getElementById('inp-task-img'),
-        taskAud: document.getElementById('inp-task-aud'),
-        
-        qReady: document.getElementById('inp-q-ready'),
-        msgSorry: document.getElementById('inp-msg-sorry'),
-        msgTask: document.getElementById('inp-msg-task'),
-        
-        dict: document.getElementById('inp-dict'),
-        unk: document.getElementById('inp-unknown'),
-        acc: document.getElementById('inp-accent'),
+        chatWin: document.getElementById('prev-chat'),
+        inpArea: document.getElementById('prev-input-area'),
+        userInp: document.getElementById('prev-in'),
+        tmrDisplay: document.getElementById('prev-timer'),
+        // settings
+        accent: document.getElementById('inp-accent'),
+        tmrOn: document.getElementById('inp-timer-on'),
+        tmrMin: document.getElementById('inp-timer-min'),
+        msgWin: document.getElementById('inp-win'),
+        msgLose: document.getElementById('inp-lose'),
         code: document.getElementById('output-code'),
-        copy: document.getElementById('btn-copy'),
-        label: document.getElementById('label-img')
+        copy: document.getElementById('btn-copy')
     };
 
-    let state = { 
-        avatar: defBot, 
-        taskImg: null, 
-        taskAud: null,
-        open: false,
-        phase: 0 // 0=Ask Ready, 1=Wait Choice, 2=Task Active, 3=Sorry End
-    };
+    // --- RENDER EDITOR ---
+    function renderQuests() {
+        els.questCont.innerHTML = '';
+        state.quests.forEach((q, i) => {
+            const card = document.createElement('div');
+            card.className = 'q-card';
+            
+            // Header
+            const head = document.createElement('div');
+            head.className = 'q-header';
+            head.innerHTML = `<span class="q-type">${q.type === 'text' ? '✍️ Текст' : '🔘 Выбор'}</span>`;
+            const delBtn = document.createElement('button');
+            delBtn.className = 'q-del';
+            delBtn.innerHTML = '×';
+            delBtn.onclick = () => removeQuest(i);
+            head.appendChild(delBtn);
+            card.appendChild(head);
 
-    // Init
-    els.imgRing.src = state.avatar;
-    els.imgHead.src = state.avatar;
+            // Type Select
+            const typeGrp = mkInpGroup('Тип вопроса:');
+            const sel = document.createElement('select');
+            sel.className = 'q-inp';
+            sel.innerHTML = `<option value="text">Ввод текста</option><option value="choice">Выбор кнопок</option>`;
+            sel.value = q.type;
+            sel.onchange = (e) => updateQuest(i, 'type', e.target.value);
+            typeGrp.appendChild(sel);
+            card.appendChild(typeGrp);
 
-    // File Handlers
-    const handleFile = (input, key, statusId) => {
-        input.onchange = e => {
-            const f = e.target.files[0];
-            if(f) {
-                const r = new FileReader();
-                r.onload = v => {
-                    state[key] = v.target.result;
-                    if(statusId) document.getElementById(statusId).innerText = "✅ Загружено";
-                    if(key === 'avatar') {
-                        els.imgRing.src = state.avatar;
-                        els.imgHead.src = state.avatar;
-                        els.label.innerText = "✅ Аватар готов";
-                    }
-                    if(state.open) restartChat();
-                };
-                r.readAsDataURL(f);
+            // Question
+            const qGrp = mkInpGroup('Текст вопроса:');
+            const inpQ = document.createElement('input');
+            inpQ.className = 'q-inp';
+            inpQ.value = q.q;
+            inpQ.oninput = (e) => updateQuest(i, 'q', e.target.value);
+            qGrp.appendChild(inpQ);
+            card.appendChild(qGrp);
+
+            // Options (only if choice)
+            if (q.type === 'choice') {
+                const oGrp = mkInpGroup('Варианты (через запятую):');
+                const inpO = document.createElement('input');
+                inpO.className = 'q-inp';
+                inpO.value = q.opts;
+                inpO.placeholder = "Да,Нет,Возможно";
+                inpO.oninput = (e) => updateQuest(i, 'opts', e.target.value);
+                oGrp.appendChild(inpO);
+                card.appendChild(oGrp);
             }
-        };
+
+            // Answer
+            const aGrp = mkInpGroup('Правильный ответ (точно):');
+            const inpA = document.createElement('input');
+            inpA.className = 'q-inp';
+            inpA.value = q.a;
+            inpA.oninput = (e) => updateQuest(i, 'a', e.target.value);
+            aGrp.appendChild(inpA);
+            card.appendChild(aGrp);
+
+            els.questCont.appendChild(card);
+        });
+    }
+
+    function mkInpGroup(label) {
+        const d = document.createElement('div'); d.className = 'q-input-group';
+        const l = document.createElement('span'); l.className = 'q-label'; l.innerText = label;
+        d.appendChild(l);
+        return d;
+    }
+
+    window.addQuest = () => {
+        state.quests.push({ type: 'text', q: '', a: '', opts: '' });
+        renderQuests();
     };
 
-    handleFile(els.file, 'avatar');
-    handleFile(els.taskImg, 'taskImg', 'st-task-img');
-    handleFile(els.taskAud, 'taskAud', 'st-task-aud');
+    window.removeQuest = (i) => {
+        state.quests.splice(i, 1);
+        renderQuests();
+    };
+
+    window.updateQuest = (i, field, val) => {
+        state.quests[i][field] = val;
+        if(field === 'type') renderQuests(); // Re-render to show/hide options
+    };
+
+    // --- PREVIEW LOGIC ---
+    els.imgInp.onchange = e => {
+        const f = e.target.files[0];
+        if(f) {
+            const r = new FileReader();
+            r.onload = v => {
+                state.avatar = v.target.result;
+                els.prevRing.src = state.avatar;
+                els.prevHead.src = state.avatar;
+                if(state.chatOpen) startSim();
+            };
+            r.readAsDataURL(f);
+        }
+    };
+    els.prevRing.src = state.avatar;
+    els.prevHead.src = state.avatar;
 
     window.toggleChat = () => {
-        state.open = !state.open;
-        if(state.open) {
+        state.chatOpen = !state.chatOpen;
+        if(state.chatOpen) {
             els.chatWin.classList.add('open');
-            restartChat();
+            startSim();
         } else {
             els.chatWin.classList.remove('open');
         }
     };
 
-    function restartChat() {
+    function startSim() {
         els.msgs.innerHTML = '';
-        state.phase = 0;
-        // Ask Ready
-        addMsg('bot', els.qReady.value);
-        addChoices();
-    }
-
-    function addChoices() {
-        const div = document.createElement('div');
-        div.className = 'choice-btns';
-        div.innerHTML = `
-            <button class="choice-btn" onclick="handleChoice(true)">Да</button>
-            <button class="choice-btn no" onclick="handleChoice(false)">Нет</button>
-        `;
-        els.msgs.appendChild(div);
-        els.msgs.scrollTop = els.msgs.scrollHeight;
-    }
-
-    window.handleChoice = (isYes) => {
-        // Remove buttons
-        const btns = els.msgs.querySelector('.choice-btns');
-        if(btns) btns.remove();
-
-        if(isYes) {
-            // Task
-            addMsg('bot', els.msgTask.value, state.taskImg, state.taskAud);
-            state.phase = 2; // Task Active
+        state.currentQIndex = 0;
+        state.gameActive = true;
+        
+        // Timer visual
+        state.timerEnabled = els.tmrOn.checked;
+        state.timerMin = els.tmrMin.value;
+        if(state.timerEnabled) {
+            els.tmrDisplay.style.display = 'block';
+            els.tmrDisplay.innerText = (state.timerMin < 10 ? '0'+state.timerMin : state.timerMin) + ":00";
         } else {
-            // Sorry
-            addMsg('bot', els.msgSorry.value);
-            state.phase = 3; // End
+            els.tmrDisplay.style.display = 'none';
         }
+
+        nextQuestion();
+    }
+
+    function nextQuestion() {
+        if(state.currentQIndex >= state.quests.length) {
+            addMsg('bot', els.msgWin.value); // Win
+            state.gameActive = false;
+            hideInput();
+            return;
+        }
+
+        const q = state.quests[stateif(!val) return;
+        handleSimAnswer(val);
+        els.userInp.value = '';
     };
 
-    function addMsg(role, text, img, aud) {
+    function handleSimAnswer(val) {
+        if(!state.gameActive) return;
+
+        // User bubble
+        addMsg('user', val);
+
+        // Remove old buttons
+        const oldBtns = els.msgs.querySelectorAll('.opt-row');
+        oldBtns.forEach(b => b.remove());
+
+        const correct = state.quests[state.currentQIndex].a.trim().toLowerCase();
+        
+        if(val.toLowerCase() === correct) {
+            // Correct
+            state.currentQIndex++;
+            setTimeout(nextQuestion, 500);
+        } else {
+            // Wrong -> Game Over
+            setTimeout(() => {
+                addMsg('bot', els.msgLose.value);
+                state.gameActive = false;
+                hideInput();
+            }, 500);
+        }
+    }
+
+    function addMsg(role, text) {
         const div = document.createElement('div');
         div.className = `message msg-${role}`;
-        
-        const avatar = document.createElement('img');
-        avatar.className = 'msg-avatar';
-        avatar.src = role === 'bot' ? state.avatar : defUser;
-        
-        const content = document.createElement('div');
-        content.style.display = 'flex'; 
-        content.style.flexDirection = 'column';
-        content.style.maxWidth = '100%';
-
-        const bub = document.createElement('div');
-        bub.className = 'bubble';
-        if(role === 'user') bub.style.background = els.acc.value;
+        const img = document.createElement('img'); img.className = 'msg-avatar';
+        img.src = role === 'bot' ? state.avatar : defUser;
+        const bub = document.createElement('div'); bub.className = 'bubble';
+        if(role === 'user') bub.style.background = els.accent.value;
         bub.innerText = text;
-        content.appendChild(bub);
-
-        if(img) {
-            const mediaDiv = document.createElement('div');
-            mediaDiv.className = 'chat-media';
-            mediaDiv.innerHTML = `<img src="${img}">`;
-            content.appendChild(mediaDiv);
-        }
-        if(aud) {
-            const audDiv = document.createElement('audio');
-            audDiv.className = 'chat-audio';
-            audDiv.controls = true;
-            audDiv.src = aud;
-            content.appendChild(audDiv);
-        }
-
-        div.appendChild(avatar);
-        div.appendChild(content);
-        
-        if(role === 'user') { div.insertBefore(content, avatar); }
-        
+        div.appendChild(img); div.appendChild(bub);
+        if(role === 'user') div.insertBefore(bub, img);
         els.msgs.appendChild(div);
         els.msgs.scrollTop = els.msgs.scrollHeight;
     }
 
-    // Parse Dictionary
-    function parseDictionary() {
-        const lines = els.dict.value.split('\n');
-        const db = {};
-        lines.forEach(line => {
-            const parts = line.split('-');
-            if(parts.length >= 2) {
-                const key = parts[0].trim().toLowerCase();
-                const val = parts.slice(1).join('-').trim();
-                if(key) db[key] = val;
-            }
-        });
-        return db;
-    }
+    function hideInput() { els.inpArea.style.display = 'none'; }
+    function showInput() { els.inpArea.style.display = 'flex'; }
 
-    window.simSend = () => {
-        const val = els.inp.value.trim();
-        if(!val) return;
-        addMsg('user', val);
-        els.inp.value = '';
-        
-        if(state.phase !== 2) return; // Only answer if task active
+    // Settings listeners
+    els.accent.oninput = () => { document.querySelector('.send-btn').style.background = els.accent.value; };
+    
+    // Initial Render
+    renderQuests();
 
-        const db = parseDictionary();
-        const key = val.toLowerCase();
-        let answer = db[key]; // Exact
-        
-        if(!answer) {
-             const found = Object.keys(db).find(k => k.includes(key) || key.includes(k));
-             if(found) answer = db[found];
-        }
-        if(!answer) answer = els.unk.value;
-        
-        setTimeout(() => addMsg('bot', answer), 400);
-    };
 
-    // Live update
-    els.acc.oninput = () => {
-        document.querySelector('.send-btn').style.background = els.acc.value;
-    };
-
-    // Generate Code
+    // --- GENERATE CODE ---
     els.copy.onclick = () => {
         const code = getCode();
         els.code.value = code;
@@ -374,26 +411,21 @@
     };
 
     function getCode() {
-        const uid = "task2-" + Math.random().toString(36).substr(2,6);
+        const uid = "quiz-" + Math.random().toString(36).substr(2,6);
         const av = state.avatar;
         const us = defUser;
-        const col = els.acc.value;
+        const col = els.accent.value;
+        const questsJSON = JSON.stringify(state.quests);
         
-        const txtReady = els.qReady.value;
-        const txtSorry = els.msgSorry.value;
-        const txtTask = els.msgTask.value;
-        
-        const tImg = state.taskImg || "";
-        const tAud = state.taskAud || "";
-        
-        const dictObj = JSON.stringify(parseDictionary());
-        const txtUnk = els.unk.value;
+        const tmrOn = els.tmrOn.checked;
+        const tmrMin = els.tmrMin.value;
+        const txtWin = els.msgWin.value;
+        const txtLose = els.msgLose.value;
 
-        // REAL Embedded Sounds for Final Code
-        // Click (Mechanical)
-        const sClick = "data:audio/mp3;base64,//uQZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWgAAAA0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABMmYXbWxpbmUAbXAzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//uQZAAP8AAAaQAAAAgAAA0gAAABAAABpAAAACAAADSAAAAEqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq"; 
-        // Ping (Notification)
-        const sPing = "data:audio/mp3;base64,//uQZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWgAAAA0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABMmYXbWxpbmUAbXAzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq"; 
+        // Sounds
+        const sClick = "data:audio/wav;base64,UklGRi4AAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAACAgEBAQAAAA==";
+        const sPing = "data:audio/wav;base64,UklGRjQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQcAAAAAAP8A/wD/AP8A/wD/AP8AAA==";
+        const sType = "data:audio/wav;base64,UklGRlIAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoAAACAAAAAgAAAAACAAAAAgAAAAICAAIAAgIDAwMDA3t7e3qCgoKDf39/fAA==";
 
         return `
 <!DOCTYPE html>
@@ -417,27 +449,20 @@
 #${uid} .prof { display:flex; align-items:center; gap:8px; font-size:14px; font-weight:bold; }
 #${uid} .prof img { width:30px; height:30px; border-radius:50%; object-fit:cover; }
 #${uid} .cls { background:none; border:none; color:#888; font-size:20px; cursor:pointer; }
+#${uid} .tmr { font-family:monospace; background:#000; padding:2px 6px; border-radius:4px; color:${col}; display:${tmrOn ? 'block' : 'none'}; }
 
 #${uid} .logs { flex:1; padding:10px; overflow-y:auto; display:flex; flex-direction:column; gap:12px; scrollbar-width:thin; }
 #${uid} .row { display:flex; gap:6px; max-width:90%; align-items:flex-end; font-size:13px; line-height:1.4; }
 #${uid} .bot { align-self:flex-start; }
 #${uid} .usr { align-self:flex-end; flex-direction:row-reverse; }
 #${uid} .av { width:24px; height:24px; border-radius:50%; object-fit:cover; flex-shrink:0; }
-#${uid} .cnt { display:flex; flex-direction:column; gap:4px; max-width:100%; }
-
 #${uid} .txt { padding:8px 12px; border-radius:15px; word-wrap:break-word; }
 #${uid} .bot .txt { background:rgba(255,255,255,0.1); border-bottom-left-radius:2px; }
 #${uid} .usr .txt { background:${col}; color:#fff; border-bottom-right-radius:2px; }
 
-#${uid} .media { border-radius:10px; overflow:hidden; border:1px solid rgba(255,255,255,0.2); margin-top:4px; }
-#${uid} .media img { width:100%; display:block; }
-#${uid} audio { width:100%; height:25px; margin-top:4px; }
-
-#${uid} .btns { display:flex; gap:8px; margin-left:30px; margin-top:-5px; }
-#${uid} .b-ch { padding:6px 16px; border-radius:20px; border:1px solid ${col}; background:none; color:#fff; cursor:pointer; font-size:12px; }
-#${uid} .b-ch:hover { background:${col}; }
-#${uid} .b-no { border-color:#666; }
-#${uid} .b-no:hover { background:#666; }
+#${uid} .opts { display:flex; flex-wrap:wrap; gap:6px; margin-left:34px; margin-top:-6px; }
+#${uid} .btn-o { background:transparent; border:1px solid ${col}; color:white; padding:6px 12px; border-radius:15px; cursor:pointer; font-size:12px; }
+#${uid} .btn-o:hover { background:${col}; }
 
 #${uid} .inp { padding:8px; background:rgba(0,0,0,0.2); border-top:1px solid #3A2E59; display:flex; gap:6px; }
 #${uid} input { flex:1; background:#0b0711; border:1px solid #3A2E59; border-radius:20px; padding:8px 12px; color:#fff; outline:none; }
@@ -450,16 +475,18 @@
     <div class="win" id="w-${uid}">
         <div class="head">
             <div class="prof"><img src="${av}"><span>Аватар</span></div>
+            <div class="tmr" id="t-${uid}">00:00</div>
             <button class="cls" id="c-${uid}">×</button>
         </div>
         <div class="logs" id="l-${uid}"></div>
-        <div class="inp">
-            <input type="text" id="i-${uid}" placeholder="Напиши ответ...">
+        <div class="inp" id="ia-${uid}">
+            <input type="text" id="i-${uid}" placeholder="Ответ...">
             <button class="snd" id="s-${uid}"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
         </div>
     </div>
-    <audio id="ac-${uid}" src="${sClick}"></audio>
-    <audio id="ap-${uid}" src="${sPing}"></audio>
+    <audio id="s1-${uid}" src="${sClick}"></audio>
+    <audio id="s2-${uid}" src="${sPing}"></audio>
+    <audio id="s3-${uid}" src="${sType}"></audio>
 </div>
 
 <script>
@@ -468,117 +495,117 @@
     var w = document.getElementById('w-${uid}');
     var c = document.getElementById('c-${uid}');
     var l = document.getElementById('l-${uid}');
+    var ia = document.getElementById('ia-${uid}');
     var i = document.getElementById('i-${uid}');
     var s = document.getElementById('s-${uid}');
+    var td = document.getElementById('t-${uid}');
     
-    var sc = document.getElementById('ac-${uid}');
-    var sp = document.getElementById('ap-${uid}');
-    
-    // Config
-    var db = ${dictObj};
-    var tImg = "${tImg}";
-    var tAud = "${tAud}";
-    var txts = { ready: "${txtReady}", sorry: "${txtSorry}", task: "${txtTask}", unk: "${txtUnk}" };
-    
+    var sc = document.getElementById('s1-${uid}');
+    var sp = document.getElementById('s2-${uid}');
+    var st = document.getElementById('s3-${uid}');
+
+    var qs = ${questsJSON};
+    var idx = 0;
     var active = false;
+    var timerOn = ${tmrOn};
+    var tTime = ${tmrMin} * 60;
+    var interval = null;
 
-    // Trigger sound on interact to unlock
-    function playSnd(type) {
-        var a = type===1 ? sc : sp;
-        a.currentTime = 0;
-        a.play().catch(function(){}); 
-    }
-
-    r.onclick = function(){ 
-        w.classList.add('show'); 
-        r.style.opacity='0'; r.style.pointerEvents='none';
-        l.innerHTML = '';
-        active = false;
-        // Step 1: Ready?
-        playSnd(2);
-        add('bot', txts.ready);
-        showBtns();
-    };
+    r.onclick = function(){ w.classList.add('show'); r.style.opacity='0'; r.style.pointerEvents='none'; if(!active) start(); };
     c.onclick = function(){ w.classList.remove('show'); r.style.opacity='1'; r.style.pointerEvents='all'; };
 
-    function mkRow(who) {
-        var d = document.createElement('div'); d.className = 'row ' + who;
-        var im = document.createElement('img'); im.className = 'av'; im.src = who==='bot'?"${av}":"${us}";
-        var cnt = document.createElement('div'); cnt.className = 'cnt';
-        d.appendChild(im); d.appendChild(cnt);
-        if(who==='usr') { d.insertBefore(cnt, im); }
-        return d;
+    function play(type) { 
+        var a = type===1?sc:(type===2?sp:st); a.currentTime=0; a.play().catch(function(){}); 
     }
 
-    function add(who, txt, img, aud) {
-        var d = mkRow(who);
-        var cnt = d.querySelector('.cnt');
+    function add(who, txt) {
+        var d = document.createElement('div'); d.className='row '+who;
+        var im = document.createElement('img'); im.className='av'; im.src=who==='bot'?"${av}":"${us}";
+        var t = document.createElement('div'); t.className='txt'; t.innerText=txt;
+        d.appendChild(im); d.appendChild(t);
+        if(who==='usr') d.insertBefore(t, im);
+        l.appendChild(d); l.scrollTop = l.scrollHeight;
+    }
+
+    function start() {
+        active = true; idx = 0; l.innerHTML = '';
+        if(timerOn) startTimer();
+        ask();
+    }
+
+    function startTimer() {
+        var rem = tTime;
+        updTime(rem);
+        interval = setInterval(function(){
+            rem--;
+            updTime(rem);
+            if(rem <= 0) gameOver(true);
+        }, 1000);
+    }
+    
+    function updTime(s) {
+        var m = Math.floor(s/60); var sec = s%60;
+        td.innerText = (m<10?'0'+m:m) + ':' + (sec<10?'0'+sec:sec);
+    }
+
+    function ask() {
+        if(idx >= qs.length) { win(); return; }
+        var q = qs[idx];
+        play(2);
+        add('bot', q.q);
         
-        if(txt) {
-            var t = document.createElement('div'); t.className='txt'; t.innerText=txt;
-            cnt.appendChild(t);
-        }
-        if(img) {
-            var md = document.createElement('div'); md.className='media';
-            md.innerHTML = '<img src="'+img+'">';
-            cnt.appendChild(md);
-        }
-        if(aud) {
-            var ad = document.createElement('audio'); ad.controls=true; ad.src=aud;
-            cnt.appendChild(ad);
-        }
-        l.appendChild(d); l.scrollTop = l.scrollHeight;
-    }
+        // Remove old opts
+        var old = l.querySelectorAll('.opts'); for(var k=0;k<old.length;k++) old[k].remove();
 
-    function showBtns() {
-        var d = document.createElement('div'); d.className='btns';
-        d.id = 'btns-${uid}';
-        d.innerHTML = '<button class="b-ch" onclick="window.ans${uid}(1)">Да</button><button class="b-ch b-no" onclick="window.ans${uid}(0)">Нет</button>';
-        l.appendChild(d); l.scrollTop = l.scrollHeight;
-    }
-
-    window.ans${uid} = function(yes) {
-        var b = document.getElementById('btns-${uid}');
-        if(b) b.remove();
-        playSnd(1); // Click sound
-
-        if(yes) {
-            add('bot', txts.task, tImg, tAud);
-            active = true;
-            playSnd(2);
+        if(q.type === 'choice') {
+            ia.style.display = 'none';
+            var d = document.createElement('div'); d.className='opts';
+            var ops = q.opts.split(',');
+            for(var x=0; x<ops.length; x++) {
+                var btn = document.createElement('button'); btn.className='btn-o';
+                btn.innerText = ops[x].trim();
+                (function(val){ btn.onclick = function(){ check(val); }; })(ops[x].trim());
+                d.appendChild(btn);
+            }
+            l.appendChild(d); l.scrollTop = l.scrollHeight;
         } else {
-            add('bot', txts.sorry);
-            active = false;
-            playSnd(2);
+            ia.style.display = 'flex';
         }
-    };
-
-    function send() {
-        var v = i.value.trim();
-        if(!v) return;
-        playSnd(1);
-        
-        add('usr', v);
-        i.value = '';
-
-        if(!active) return; // Ignore if not in task
-
-        var k = v.toLowerCase();
-        var ans = db[k];
-        if(!ans) {
-             var f = Object.keys(db).find(x => x.includes(k) || k.includes(x));
-             if(f) ans = db[f];
-        }
-        if(!ans) ans = txts.unk;
-
-        setTimeout(function(){ 
-            add('bot', ans); 
-            playSnd(2);
-        }, 500);
     }
 
-    s.onclick = send;
-    i.onkeypress = function(e){ if(e.key==='Enter') send(); };
+    function check(ans) {
+        if(!active) return;
+        play(3);
+        add('usr', ans);
+        var cor = qs[idx].a.trim().toLowerCase();
+        if(ans.toLowerCase() === cor) {
+            idx++;
+            setTimeout(ask, 600);
+        } else {
+            setTimeout(function(){ gameOver(false); }, 600);
+        }
+    }
+
+    function gameOver(timeout) {
+        active = false;
+        clearInterval(interval);
+        ia.style.display = 'none';
+        var old = l.querySelectorAll('.opts'); for(var k=0;k<old.length;k++) old[k].remove();
+        play(2);
+        add('bot', timeout ? "Время вышло. ${txtLose}" : "${txtLose}");
+    }
+
+    function win() {
+        active = false;
+        clearInterval(interval);
+        ia.style.display = 'none';
+        play(2);
+        add('bot', "${txtWin}");
+    }
+
+    s.onclick = function(){ var v=i.value.trim(); if(v){ i.value=''; check(v); } };
+    i.onkeypress = function(e){ if(e.key==='Enter') s.onclick(); };
+
 })();
 <\/script>
 </body>
