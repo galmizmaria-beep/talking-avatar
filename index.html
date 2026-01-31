@@ -99,8 +99,8 @@
         }
 
         .avatar-img {
-            width: 90%;
-            height: 90%;
+            width: 92%; /* Синхронизировано с финальным кодом */
+            height: 92%;
             border-radius: 50%;
             object-fit: cover;
             display: none;
@@ -141,6 +141,7 @@
             width: 60px;
             height: 60px;
             border-radius: 50%;
+            /* Градиент по умолчанию, переопределяется JS */
             background: linear-gradient(135deg, #a960ec, #f72585);
             box-shadow: 0 5px 20px rgba(247, 37, 133, 0.4);
             display: flex;
@@ -305,11 +306,14 @@
             <span class="label-text">Размер аватара:</span>
             <input type="range" id="rng-size" min="30" max="85" value="65" style="width:100%">
 
-            <span class="label-text">Цвет свечения:</span>
+            <span class="label-text">Цвет свечения (кольцо):</span>
             <input type="color" id="inp-color" value="#F72585">
 
             <span class="label-text">Интенсивность свечения:</span>
             <input type="range" id="rng-glow" min="10" max="50" value="20" style="width:100%">
+
+            <span class="label-text">Цвет кнопки Play:</span>
+            <input type="color" id="inp-btn-color" value="#F72585">
 
             <span class="label-text">Цвет фона:</span>
             <input type="color" id="inp-bg-color" value="#120C1C">
@@ -338,6 +342,7 @@
         audio: document.getElementById('main-audio'),
         btnPlay: document.getElementById('prev-b-play'),
         color: document.getElementById('inp-color'),
+        btnColor: document.getElementById('inp-btn-color'), // Новая кнопка
         borderColor: document.getElementById('inp-border-color'),
         bgColor: document.getElementById('inp-bg-color'),
         glow: document.getElementById('rng-glow'),
@@ -362,6 +367,9 @@
                 els.prevImg.style.display = 'block';
                 els.prevPlace.style.display = 'none';
                 els.imgName.innerText = "✅ Картинка загружена";
+                
+                // Форсируем обновление src чтобы гарантировать соответствие
+                updatePreview();
             } else {
                 els.audio.src = state.audio;
                 els.audName.innerText = "✅ Аудио загружено";
@@ -379,12 +387,13 @@
 
     const updatePreview = () => {
         const color = els.color.value;
+        const bColor = els.btnColor.value; // Цвет кнопки
         const glowSize = els.glow.value;
         const sizeVal = els.size.value;
         const bordColor = els.borderColor.value;
         const bgColor = els.bgColor.value;
         
-        // Для превью используем пиксели (так удобнее визуализировать в редакторе)
+        // Размеры
         const pxSize = (sizeVal / 100) * 350; 
         els.prevRing.style.width = pxSize + 'px';
         els.prevRing.style.height = pxSize + 'px';
@@ -394,11 +403,17 @@
         els.prevBox.style.width = boxWidth + 'px';
         els.prevBox.style.height = boxHeight + 'px';
 
+        // Свечение кольца
         els.prevRing.style.boxShadow = `0 0 ${glowSize}px ${color}, inset 0 0 ${glowSize/2}px ${color}`;
         els.prevRing.style.borderColor = color;
 
+        // Фон и рамка
         els.prevBox.style.borderColor = bordColor;
         els.prevBox.style.backgroundColor = bgColor;
+
+        // Цвет кнопки Play
+        els.btnPlay.style.background = bColor;
+        els.btnPlay.style.boxShadow = `0 4px 15px ${bColor}80`; // полупрозрачная тень того же цвета
     };
 
     const togglePlay = () => els.audio.paused ? els.audio.play() : els.audio.pause();
@@ -421,7 +436,7 @@
         updatePreview();
     };
 
-    [els.color, els.glow, els.size, els.borderColor, els.bgColor].forEach(el => el.oninput = updatePreview);
+    [els.color, els.glow, els.size, els.borderColor, els.bgColor, els.btnColor].forEach(el => el.oninput = updatePreview);
     
     updatePreview();
 
@@ -432,6 +447,7 @@
         }
 
         const color = els.color.value;
+        const bColor = els.btnColor.value;
         const glowSize = els.glow.value;
         const sizeVal = els.size.value;
         const bordColor = els.borderColor.value;
@@ -439,8 +455,6 @@
         
         const uid = "gen-" + Math.random().toString(36).substr(2, 6);
 
-        // ИСПРАВЛЕНИЕ: Вместо фиксированных пикселей (px) используем 100% ширины и высоты
-        // А размер кольца задаем в vmin (процент от минимальной стороны рамки)
         return `
 <!DOCTYPE html>
 <html>
@@ -453,7 +467,6 @@
     }
     
     #${uid} {
-        /* ТЕПЕРЬ ОН РАСТЯГИВАЕТСЯ НА ВЕСЬ КОНТЕЙНЕР */
         width: 100%;
         height: 100%;
         
@@ -471,10 +484,8 @@
     
     #${uid} .ring {
         position: relative;
-        /* Размер зависит от размера рамки, которую вы тянете в Genially */
         width: ${sizeVal}vmin; 
         height: ${sizeVal}vmin;
-        /* Максимальные ограничения на случай огромных экранов */
         max-width: 80vmin;
         max-height: 80vmin;
         
@@ -496,6 +507,7 @@
     }
     
     #${uid} .avatar {
+        /* Эти значения должны точно совпадать с CSS редактора */
         width: 92%;
         height: 92%;
         border-radius: 50%;
@@ -531,8 +543,9 @@
         width: 60px;
         height: 60px;
         border-radius: 50%;
-        background: linear-gradient(135deg, #a960ec, #f72585);
-        box-shadow: 0 4px 15px rgba(247, 37, 133, 0.5);
+        /* Цвет кнопки из настроек */
+        background: ${bColor};
+        box-shadow: 0 4px 15px ${bColor}80;
     }
     #${uid} .btn-play svg {
         width: 28px;
@@ -629,4 +642,3 @@
 </script>
 </body>
 </html>
-            
