@@ -154,7 +154,6 @@
 
             sizeSlider.addEventListener('input', (e) => {
                 const size = e.target.value;
-                // Размер виджета влияет на размер аватара в предпросмотре
                 const avatarPreviewSize = size * 0.7;
                 avatarContainer.style.width = `${avatarPreviewSize}px`;
                 avatarContainer.style.height = `${avatarPreviewSize}px`;
@@ -196,10 +195,10 @@
                     :root{--glow-color:${glowColor};--blur:${blur}px;--spread:${spread}px}
                     body,html{margin:0;padding:0;width:100%;height:100%;background:transparent;overflow:hidden;font-family:sans-serif;display:flex;justify-content:center;align-items:center}
                     .player-widget{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10%}
-                    .avatar-wrapper{width:70%;height:70%;border-radius:50%;padding:5px;position:relative;transition:filter .4s ease}
+                    .avatar-wrapper{width:70%;height:70%;border-radius:50%;padding:5px;position:relative;transition:filter .4s ease;cursor:pointer}
                     .avatar-wrapper.speaking{filter:drop-shadow(0 0 var(--blur) var(--glow-color))}
                     #avatar-img{width:100%;height:100%;border-radius:50%;object-fit:cover}
-                    .controls{display:flex;align-items:center;justify-content:center;gap:15%}
+                    .controls{display:flex;align-items:center;justify-content:center;gap:15%;width:80%}
                     .ctrl-btn{background:none;border:none;padding:0;cursor:pointer;color:white;opacity:.7;transition:all .3s}
                     .ctrl-btn:hover{opacity:1;transform:scale(1.1)}
                     .ctrl-btn svg{width:1.8em;height:1.8em}
