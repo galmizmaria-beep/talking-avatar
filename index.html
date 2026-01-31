@@ -58,19 +58,20 @@
             border: 1px solid var(--border);
         }
 
-        /* Preview Box - имитирует Genially */
+        /* Preview Box */
         #preview-box {
             height: 400px;
             display: flex;
             justify-content: center;
             align-items: center;
             position: relative;
-            background: radial-gradient(circle at center, #2a1a4a 0%, #120C1C 70%);
-            border-radius: 10px;
+            /* Фон превью такой же, как будет в итоге */
+            background-color: #120C1C; 
+            border: 1px solid #3A2E59;
+            border-radius: 20px;
             overflow: hidden;
         }
 
-        /* Внутренние стили превью, чтобы было видно как в Genially */
         .preview-content {
             display: flex;
             flex-direction: column;
@@ -88,7 +89,10 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            transition: box-shadow 0.3s ease;
+            transition: all 0.3s ease;
+            /* Начальный размер для превью */
+            width: 200px;
+            height: 200px;
         }
 
         .avatar-img {
@@ -96,7 +100,7 @@
             height: 90%;
             border-radius: 50%;
             object-fit: cover;
-            display: none; /* Скрыто пока нет фото */
+            display: none;
         }
 
         .placeholder-text {
@@ -145,7 +149,7 @@
             height: 30px;
             fill: white;
             margin-left: 4px;
-        } /* margin fix for play triangle */
+        }
 
         .arrow-btn svg {
             width: 30px;
@@ -246,7 +250,7 @@
             <div id="preview-box">
                 <!-- Внутренняя структура превью -->
                 <div class="preview-content">
-                    <div class="ring-container" id="prev-ring" style="width: 200px; height: 200px;">
+                    <div class="ring-container" id="prev-ring">
                         <span class="placeholder-text" id="prev-placeholder">Нет фото</span>
                         <img id="prev-img" class="avatar-img">
                     </div>
@@ -272,6 +276,9 @@
                 <span id="aud-name">🎵 Загрузить Аудио</span>
                 <input type="file" id="inp-aud" accept="audio/*,video/mp4" class="file-input">
             </label>
+
+            <span class="label-text">Размер аватара:</span>
+            <input type="range" id="rng-size" min="30" max="85" value="65" style="width:100%">
 
             <span class="label-text">Цвет свечения:</span>
             <input type="color" id="inp-color" value="#F72585" style="width:100%; height:40px; border:none; background:none; cursor:pointer;">
@@ -301,6 +308,7 @@
         btnPlay: document.getElementById('prev-b-play'),
         color: document.getElementById('inp-color'),
         glow: document.getElementById('rng-glow'),
+        size: document.getElementById('rng-size'),
         outCode: document.getElementById('output-code'),
         btnCopy: document.getElementById('btn-copy')
     };
@@ -334,12 +342,18 @@
         if(e.target.files[0]) readFile(e.target.files[0], 'audio');
     };
 
-    // Preview Logic (Исправлено: теперь свечение видно сразу при настройке)
+    // Preview Logic
     const updatePreview = () => {
         const color = els.color.value;
         const glowSize = els.glow.value;
+        const sizeVal = els.size.value;
         
-        // Показываем свечение в редакторе всегда, чтобы было видно результат настройки
+        // Масштабируем размер кольца в превью (примерно от 120px до 320px)
+        const pxSize = (sizeVal / 100) * 350; 
+        els.prevRing.style.width = pxSize + 'px';
+        els.prevRing.style.height = pxSize + 'px';
+
+        // Показываем свечение в редакторе всегда
         els.prevRing.style.boxShadow = `0 0 ${glowSize}px ${color}, inset 0 0 ${glowSize/2}px ${color}`;
         els.prevRing.style.borderColor = color;
     };
@@ -358,7 +372,6 @@
     };
     els.audio.onpause = () => {
         els.btnPlay.innerHTML = iconPlay;
-        // Мы не убираем свечение здесь, чтобы настройки оставались видны
         updatePreview();
     };
     els.audio.onended = () => {
@@ -366,10 +379,8 @@
         updatePreview();
     };
 
-    // Обновляем превью при движении ползунков
-    [els.color, els.glow].forEach(el => el.oninput = updatePreview);
-    
-    // Инициализация (чтобы сразу было что-то видно)
+    // Listeners
+    [els.color, els.glow, els.size].forEach(el => el.oninput = updatePreview);
     updatePreview();
 
     // --- HTML GENERATOR ---
@@ -381,18 +392,19 @@
 
         const color = els.color.value;
         const glowSize = els.glow.value;
+        const sizeVal = els.size.value;
         
-        // Уникальный ID чтобы стили не смешивались
         const uid = "gen-" + Math.random().toString(36).substr(2, 6);
 
-        // Мы используем height: 100% и flexbox, чтобы контент занимал весь iframe в Genially
-        // Адаптивные размеры через vmin (зависит от меньшей стороны экрана/iframe)
+        // Мы добавляем стили для body/container, чтобы это выглядело как карточка на референсе
+        // Background: #120C1C, Border: #3A2E59, Radius: 20px
         return `
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"></head>
-<body style="margin:0;padding:0;overflow:hidden;background:transparent;width:100vw;height:100vh;">
+<body style="margin:0;padding:0;overflow:hidden;width:100vw;height:100vh;">
 <style>
+    /* Основной контейнер-карточка (как на референсе) */
     #${uid} {
         width: 100%;
         height: 100%;
@@ -401,23 +413,32 @@
         justify-content: center;
         align-items: center;
         font-family: sans-serif;
-        box-sizing: border-box; /* Если виджет слишком маленький, используем scale */
+        box-sizing: border-box;
+        
+        /* Стилизация карточки */
+        background-color: #120C1C; 
+        border: 1px solid #3A2E59;
+        border-radius: 20px;
+        padding: 10px;
     }
     
     /* Аватар в круге */
     #${uid} .ring {
         position: relative;
-        width: 65vmin; /* Адаптивный размер: 65% от меньшей стороны */
-        height: 65vmin;
-        max-width: 400px;
-        max-height: 400px;
+        /* Размер зависит от ползунка (vmin - % от меньшей стороны экрана) */
+        width: ${sizeVal}vmin; 
+        height: ${sizeVal}vmin;
+        /* Максимальные ограничения, чтобы не вылезало на ПК */
+        max-width: 80vh;
+        max-height: 80vh;
+        
         border-radius: 50%;
         border: 2px solid rgba(255,255,255,0.15);
         display: flex;
         justify-content: center;
         align-items: center;
         transition: all 0.4s ease;
-        margin-bottom: 20px; /* Отступ до кнопок */
+        margin-bottom: 20px;
         cursor: pointer;
     }
     
@@ -432,7 +453,7 @@
         height: 92%;
         border-radius: 50%;
         object-fit: cover;
-        pointer-events: none; /* Клик проходит сквозь картинку на кольцо */
+        pointer-events: none;
     }
 
     /* Панель управления */
@@ -442,6 +463,7 @@
         justify-content: center;
         gap: 25px;
         width: 100%;
+        z-index: 2;
     }
 
     #${uid} button {
@@ -461,7 +483,7 @@
     /* Кнопка Play */
     #${uid} .btn-play {
         width: 60px;
-        height: 60px; /* Фиксированный размер кнопки */
+        height: 60px;
         border-radius: 50%;
         background: linear-gradient(135deg, #a960ec, #f72585);
         box-shadow: 0 4px 15px rgba(247, 37, 133, 0.5);
@@ -471,7 +493,6 @@
         height: 28px;
         fill: white;
     }
-    /* Поправка для треугольника Play (визуальный центр) */
     #${uid} .btn-play svg.is-play { margin-left: 4px; }
 
     /* Стрелки */
@@ -545,7 +566,6 @@
 </html>`;
     };
 
-    // Export Handlers
     els.btnCopy.onclick = () => {
         const html = generateHTML();
         if(!html) return;
