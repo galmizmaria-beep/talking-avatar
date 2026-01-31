@@ -198,20 +198,41 @@
                 const blur = 10 + intensity * 1.5;
                 const spread = 2 + intensity * 0.5;
                 
-                const widgetCode = `<div style="width:100%;height:100%;display:flex;justify-content:center;align-items:center;">
-<div id="genially-avatar-container" style="cursor:pointer;position:relative;width:${size}px;height:${size}px;">
-<img id="genially-avatar-img" src="${imageDataUrl}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;transition:box-shadow .4s ease-in-out;">
-</div>
-<style>
-@keyframes talking-glow{0%{box-shadow:0 0 ${blur/2}px ${spread/2}px ${glowColor}00}50%{box-shadow:0 0 ${blur}px ${spread}px ${glowColor}CC}100%{box-shadow:0 0 ${blur/2}px ${spread/2}px ${glowColor}00}}
-#genially-avatar-img.speaking{animation:talking-glow 1.5s infinite}
-</style>
-<script>
-(function(){var c=document.getElementById('genially-avatar-container');if(c&&!c.hasAttribute('data-initialized')){c.setAttribute('data-initialized','true');var i=document.getElementById('genially-avatar-img');var a=new Audio("${audioDataUrl}");c.addEventListener('click',function(){if(a.paused){a.play()}else{a.pause()}});a.addEventListener('play',function(){i.classList.add('speaking')});a.addEventListener('pause',function(){i.classList.remove('speaking')});a.addEventListener('ended',function(){i.classList.remove('speaking')})}})();
-<\/script></div>`;
+                const innerHtmlContent = `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <style>
+                            body { margin: 0; background-color: transparent; overflow: hidden; display: flex; justify-content: center; align-items: center; }
+                            #avatar-container { cursor: pointer; position: relative; width: 100%; height: 100%; }
+                            #avatar-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; transition: box-shadow .4s ease-in-out; }
+                            @keyframes talking-glow { 0% { box-shadow: 0 0 ${blur/2}px ${spread/2}px ${glowColor}00; } 50% { box-shadow: 0 0 ${blur}px ${spread}px ${glowColor}CC; } 100% { box-shadow: 0 0 ${blur/2}px ${spread/2}px ${glowColor}00; } }
+                            #avatar-img.speaking { animation: talking-glow 1.5s infinite; }
+                        </style>
+                    </head>
+                    <body>
+                        <div id="avatar-container">
+                            <img id="avatar-img" src="${imageDataUrl}">
+                        </div>
+                        <script>
+                            (function(){
+                                var container = document.getElementById('avatar-container');
+                                var img = document.getElementById('avatar-img');
+                                var audio = new Audio("${audioDataUrl}");
+                                container.addEventListener('click', function(){ if(audio.paused) {audio.play()} else {audio.pause()} });
+                                audio.addEventListener('play', function(){ img.classList.add('speaking') });
+                                audio.addEventListener('pause', function(){ img.classList.remove('speaking') });
+                                audio.addEventListener('ended', function(){ img.classList.remove('speaking') });
+                            })();
+                        <\/script>
+                    </body>
+                    </html>
+                `.trim().replace(/"/g, '&quot;'); // Экранируем кавычки для атрибута srcdoc
 
-                generatedCode.value = widgetCode.trim();
-                navigator.clipboard.writeText(generatedCode.value).then(() => {
+                const iframeCode = `<iframe srcdoc="${innerHtmlContent}" style="width: ${size}px; height: ${size}px; border: none; background: transparent;" scrolling="no" allow="autoplay"></iframe>`;
+
+                generatedCode.value = iframeCode;
+                navigator.clipboard.writeText(iframeCode).then(() => {
                     const originalText = getCodeBtn.textContent;
                     getCodeBtn.textContent = 'Скопировано!';
                     getCodeBtn.classList.add('copied');
