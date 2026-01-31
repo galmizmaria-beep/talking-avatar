@@ -30,7 +30,7 @@
         #preview-area { display: flex; justify-content: center; align-items: center; height: 380px; margin-bottom: 20px; }
         #avatar-container { display: flex; justify-content: center; align-items: center; transition: all 0.3s ease; position: relative; width: 250px; height: 250px; }
         #image-placeholder { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; border: 3px dashed var(--border-color); border-radius: 50%; color: #aaa; text-align: center; font-size: 1.2em; }
-        #avatar-image { border-radius: 50%; object-fit: cover; width: 100%; height: 100%; border: 4px solid var(--border-color); box-shadow: 0 5px 20px rgba(0,0,0,0.4); display: none; /* Скрыто по умолчанию */ }
+        #avatar-image { border-radius: 50%; object-fit: cover; width: 100%; height: 100%; border: 4px solid var(--border-color); box-shadow: 0 5px 20px rgba(0,0,0,0.4); display: none; }
         .player-controls { display: flex; justify-content: center; align-items: center; gap: 20px; }
         .player-btn { background: none; border: none; cursor: pointer; padding: 0; display: flex; align-items: center; justify-content: center; color: var(--text-color); transition: color 0.3s, transform 0.2s; }
         .player-btn:hover { color: var(--accent-color); transform: scale(1.1); }
@@ -47,9 +47,9 @@
         input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
         input[type="color"]::-webkit-color-swatch { border: 2px solid var(--border-color); border-radius: 5px; }
         .code-generation { margin-top: 30px; text-align: center; }
-        #get-code-btn { background: linear-gradient(145deg, var(--primary-color), var(--accent-color)); color: white; padding: 15px 35px; border: none; border-radius: 50px; cursor: pointer; font-size: 1.1em; font-weight: 600; margin-bottom: 20px; transition: transform 0.2s, box-shadow 0.3s; box-shadow: 0 0 15px var(--primary-color); }
+        #get-code-btn { background: linear-gradient(145deg, var(--primary-color), var(--accent-color)); color: white; padding: 15px 35px; border: none; border-radius: 50px; cursor: pointer; font-size: 1.1em; font-weight: 600; margin-bottom: 20px; transition: all 0.3s; box-shadow: 0 0 15px var(--primary-color); }
         #get-code-btn:hover { transform: scale(1.05); box-shadow: 0 0 25px var(--accent-color); }
-        #get-code-btn.copied { background: #28a745; box-shadow: 0 0 15px #28a745; }
+        #get-code-btn.ready { background: #28a745; box-shadow: 0 0 15px #28a745; }
         #generated-code { width: 100%; height: 150px; font-family: 'Courier New', Courier, monospace; font-size: 14px; padding: 15px; background-color: var(--bg-color); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 10px; resize: vertical; box-sizing: border-box; }
     </style>
 </head>
@@ -78,16 +78,13 @@
                     <div id="image-file-name" class="file-name">Файл не выбран</div>
                 </label>
                 <label for="audio-upload" class="file-label">Нажмите, чтобы загрузить аудио
-                    <input type="file" id="audio-upload" accept="audio/*">
+                    <input type="file" id="audio-upload" accept="audio/*,video/mp4">
                     <div id="audio-file-name" class="file-name">Файл не выбран</div>
                 </label>
-
                 <label for="size-slider">Размер: <span id="size-value">250px</span></label>
                 <input type="range" id="size-slider" min="80" max="300" value="250">
-                
                 <label for="glow-color">Цвет свечения</label>
                 <input type="color" id="glow-color" value="#F72585">
-
                 <label for="glow-intensity-slider">Интенсивность свечения: <span id="glow-intensity-value">10</span></label>
                 <input type="range" id="glow-intensity-slider" min="1" max="20" value="10">
             </div>
@@ -102,6 +99,8 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            const getCodeBtn = document.getElementById('get-code-btn');
+            const generatedCode = document.getElementById('generated-code');
             const imageUpload = document.getElementById('image-upload');
             const audioUpload = document.getElementById('audio-upload');
             const imageFileName = document.getElementById('image-file-name');
@@ -111,8 +110,6 @@
             const glowColorInput = document.getElementById('glow-color');
             const glowIntensitySlider = document.getElementById('glow-intensity-slider');
             const glowIntensityValue = document.getElementById('glow-intensity-value');
-            const getCodeBtn = document.getElementById('get-code-btn');
-            const generatedCode = document.getElementById('generated-code');
             const avatarContainer = document.getElementById('avatar-container');
             const imagePlaceholder = document.getElementById('image-placeholder');
             const avatarImage = document.getElementById('avatar-image');
@@ -123,39 +120,39 @@
 
             const playIcon = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>`;
             const pauseIcon = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>`;
-
             let imageDataUrl = '';
             let audioDataUrl = '';
+            const originalButtonText = getCodeBtn.textContent;
 
             btnPlayPause.innerHTML = playIcon;
+            
+            const readerOnload = (file, type) => (event) => {
+                if (type === 'image') {
+                    imageDataUrl = event.target.result;
+                    avatarImage.src = imageDataUrl;
+                    imagePlaceholder.style.display = 'none';
+                    avatarImage.style.display = 'block';
+                    imageFileName.textContent = file.name;
+                } else if (type === 'audio') {
+                    audioDataUrl = event.target.result;
+                    audioPlayer.src = audioDataUrl;
+                    audioFileName.textContent = file.name;
+                }
+                getCodeBtn.textContent = originalButtonText;
+                getCodeBtn.classList.remove('ready');
+            };
 
-            imageUpload.addEventListener('change', (e) => {
-                const file = e.target.files[0];
+            const handleFileSelect = (event, type) => {
+                const file = event.target.files[0];
                 if (file) {
                     const reader = new FileReader();
-                    reader.onload = function(event) {
-                        imageDataUrl = event.target.result;
-                        avatarImage.src = imageDataUrl;
-                        imagePlaceholder.style.display = 'none';
-                        avatarImage.style.display = 'block';
-                        imageFileName.textContent = file.name;
-                    }
+                    reader.onload = readerOnload(file, type);
                     reader.readAsDataURL(file);
                 }
-            });
+            };
 
-            audioUpload.addEventListener('change', (e) => {
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function(event) {
-                        audioDataUrl = event.target.result;
-                        audioPlayer.src = audioDataUrl;
-                        audioFileName.textContent = file.name;
-                    }
-                    reader.readAsDataURL(file);
-                }
-            });
+            imageUpload.addEventListener('change', (e) => handleFileSelect(e, 'image'));
+            audioUpload.addEventListener('change', (e) => handleFileSelect(e, 'audio'));
 
             sizeSlider.addEventListener('input', (e) => {
                 const size = e.target.value;
@@ -198,49 +195,17 @@
                 const blur = 10 + intensity * 1.5;
                 const spread = 2 + intensity * 0.5;
                 
-                const innerHtmlContent = `
-                    <!DOCTYPE html>
-                    <html>
-                    <head>
-                        <style>
-                            body { margin: 0; background-color: transparent; overflow: hidden; display: flex; justify-content: center; align-items: center; }
-                            #avatar-container { cursor: pointer; position: relative; width: 100%; height: 100%; }
-                            #avatar-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; transition: box-shadow .4s ease-in-out; }
-                            @keyframes talking-glow { 0% { box-shadow: 0 0 ${blur/2}px ${spread/2}px ${glowColor}00; } 50% { box-shadow: 0 0 ${blur}px ${spread}px ${glowColor}CC; } 100% { box-shadow: 0 0 ${blur/2}px ${spread/2}px ${glowColor}00; } }
-                            #avatar-img.speaking { animation: talking-glow 1.5s infinite; }
-                        </style>
-                    </head>
-                    <body>
-                        <div id="avatar-container">
-                            <img id="avatar-img" src="${imageDataUrl}">
-                        </div>
-                        <script>
-                            (function(){
-                                var container = document.getElementById('avatar-container');
-                                var img = document.getElementById('avatar-img');
-                                var audio = new Audio("${audioDataUrl}");
-                                container.addEventListener('click', function(){ if(audio.paused) {audio.play()} else {audio.pause()} });
-                                audio.addEventListener('play', function(){ img.classList.add('speaking') });
-                                audio.addEventListener('pause', function(){ img.classList.remove('speaking') });
-                                audio.addEventListener('ended', function(){ img.classList.remove('speaking') });
-                            })();
-                        <\/script>
-                    </body>
-                    </html>
-                `.trim().replace(/"/g, '&quot;'); // Экранируем кавычки для атрибута srcdoc
-
-                const iframeCode = `<iframe srcdoc="${innerHtmlContent}" style="width: ${size}px; height: ${size}px; border: none; background: transparent;" scrolling="no" allow="autoplay"></iframe>`;
+                const innerHtmlContent = `<!DOCTYPE html><html><head><style>body,html{margin:0;padding:0;width:100%;height:100%;background-color:transparent;overflow:hidden;display:flex;justify-content:center;align-items:center}#avatar-container{cursor:pointer;position:relative;width:100%;height:100%}#avatar-img{width:100%;height:100%;border-radius:50%;object-fit:cover;transition:box-shadow .4s ease-in-out}@keyframes talking-glow{0%{box-shadow:0 0 ${blur/2}px ${spread/2}px ${glowColor}00}50%{box-shadow:0 0 ${blur}px ${spread}px ${glowColor}CC}100%{box-shadow:0 0 ${blur/2}px ${spread/2}px ${glowColor}00}}#avatar-img.speaking{animation:talking-glow 1.5s infinite}</style></head><body><div id="avatar-container"><img id="avatar-img" src="${imageDataUrl}"></div><script>var c=document.getElementById('avatar-container'),i=document.getElementById('avatar-img'),a=new Audio("${audioDataUrl}");c.addEventListener('click',function(){a.paused?a.play():a.pause()});a.addEventListener('play',function(){i.classList.add('speaking')});a.addEventListener('pause',function(){i.classList.remove('speaking')});a.addEventListener('ended',function(){i.classList.remove('speaking')})<\/script></body></html>`;
+                
+                const base64Html = btoa(unescape(encodeURIComponent(innerHtmlContent)));
+                const iframeCode = `<iframe src="data:text/html;base64,${base64Html}" style="width: ${size}px; height: ${size}px; border: none; background: transparent;" scrolling="no" allow="autoplay"></iframe>`;
 
                 generatedCode.value = iframeCode;
-                navigator.clipboard.writeText(iframeCode).then(() => {
-                    const originalText = getCodeBtn.textContent;
-                    getCodeBtn.textContent = 'Скопировано!';
-                    getCodeBtn.classList.add('copied');
-                    setTimeout(() => {
-                        getCodeBtn.textContent = originalText;
-                        getCodeBtn.classList.remove('copied');
-                    }, 2000);
-                }).catch(err => alert('Не удалось скопировать. Пожалуйста, скопируйте вручную.'));
+                generatedCode.select();
+                generatedCode.setSelectionRange(0, 99999); // Для мобильных устройств
+
+                getCodeBtn.textContent = 'Код готов! Скопируйте (Ctrl+C)';
+                getCodeBtn.classList.add('ready');
             });
         });
     </script>
