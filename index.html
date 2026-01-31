@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Конструктор Квиза (Исправленный)</title>
+    <title>Конструктор Квиза (Media + Sound Fix)</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root { --bg: #120C1C; --surface: #1E1234; --primary: #A450F3; --accent: #F72585; --text: #EAE2FF; --border: #3A2E59; --input-bg: #0b0711; --danger: #ff4757; }
+        :root { --bg: #120C1C; --surface: #1E1234; --primary: #A450F3; --accent: #F72585; --text: #EAE2FF; --border: #3A2E59; --input-bg: #0b0711; --danger: #ff4757; --success: #2ecc71; }
         * { box-sizing: border-box; }
         body { font-family: 'Poppins', sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
         
-        #editor-container { max-width: 1200px; width: 100%; background-color: var(--surface); padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid var(--border); }
+        #editor-container { max-width: 1250px; width: 100%; background-color: var(--surface); padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid var(--border); }
         h1 { text-align: center; margin-bottom: 30px; text-shadow: 0 0 10px var(--accent); }
         .editor-layout { display: flex; flex-wrap: wrap; gap: 30px; }
         .col { flex: 1; min-width: 350px; display: flex; flex-direction: column; gap: 15px; }
@@ -20,7 +20,7 @@
             position: relative;
             background-image: linear-gradient(45deg, #181818 25%, transparent 25%), linear-gradient(-45deg, #181818 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #181818 75%), linear-gradient(-45deg, transparent 75%, #181818 75%);
             background-size: 20px 20px; background-color: #222; border: 1px dashed #555; border-radius: 20px;
-            overflow: hidden; width: 100%; height: 650px; display: flex; justify-content: center; align-items: center;
+            overflow: hidden; width: 100%; height: 700px; display: flex; justify-content: center; align-items: center;
         }
         .widget-wrapper { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; position: relative; }
 
@@ -41,12 +41,19 @@
         .chat-messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
         .message { display: flex; align-items: flex-end; gap: 8px; max-width: 90%; }
         .msg-avatar { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+        
+        .bubble-cont { display: flex; flex-direction: column; gap: 5px; max-width: 100%; }
         .bubble { padding: 10px 14px; border-radius: 18px; font-size: 0.9rem; line-height: 1.4; word-wrap: break-word; }
         .msg-bot { align-self: flex-start; }
         .msg-bot .bubble { background: rgba(255,255,255,0.1); border-bottom-left-radius: 2px; }
         .msg-user { align-self: flex-end; flex-direction: row-reverse; }
         .msg-user .bubble { background: var(--accent); color: white; border-bottom-right-radius: 2px; }
         
+        /* Media inside chat */
+        .chat-media { border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,0.2); margin-top: 5px; }
+        .chat-media img { width: 100%; height: auto; display: block; }
+        .chat-audio { width: 100%; height: 30px; margin-top: 5px; }
+
         /* Options Buttons */
         .opt-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 5px; margin-left: 36px; }
         .opt-btn { background: transparent; border: 1px solid var(--accent); color: white; padding: 6px 12px; border-radius: 15px; cursor: pointer; font-size: 0.85rem; transition: 0.2s; }
@@ -74,6 +81,11 @@
         .q-header { display: flex; justify-content: space-between; margin-bottom: 10px; align-items: center; }
         .q-type { font-size: 0.8rem; background: var(--primary); padding: 2px 6px; border-radius: 4px; }
         .q-del { background: var(--danger); border: none; color: white; width: 24px; height: 24px; border-radius: 50%; cursor: pointer; display: flex; justify-content: center; align-items: center; }
+        
+        .q-media-bar { display: flex; gap: 10px; margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); }
+        .media-btn { flex: 1; position: relative; background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 6px; color: #aaa; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; padding: 8px; transition: 0.2s; }
+        .media-btn:hover { background: rgba(255,255,255,0.05); }
+        .media-btn.active { border-color: var(--success); color: var(--success); background: rgba(46, 204, 113, 0.1); }
         
         .q-input-group { margin-bottom: 8px; }
         .q-label { font-size: 0.75rem; color: #aaa; margin-bottom: 2px; display: block; }
@@ -162,21 +174,29 @@
     </div>
 </div>
 
+<!-- Hidden Audios for Preview -->
+<audio id="prev-aud-click"></audio>
+<audio id="prev-aud-ping"></audio>
+<audio id="prev-aud-type"></audio>
+
 <script>
     // --- DATA & STATE ---
     const defBot = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23cccccc'%3E%3Cpath d='M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2'/%3E%3C/svg%3E";
     const defUser = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23888888'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E";
 
-    // Sounds (Base64) - Standardized
-    const sClick = "data:audio/wav;base64,UklGRi4AAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAACAgEBAQAAAA=="; 
-    const sPing = "data:audio/wav;base64,UklGRjQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQcAAAAAAP8A/wD/AP8A/wD/AP8AAA==";
-    const sType = "data:audio/wav;base64,UklGRlIAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoAAACAAAAAgAAAAACAAAAAgAAAAICAAIAAgIDAwMDA3t7e3qCgoKDf39/fAA==";
+    // RELIABLE BASE64 SOUNDS
+    // 1. Send/Typewriter (Short Mechanical click)
+    const sType = "data:audio/wav;base64,UklGRi4AAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAACAgEBAQAAAA==";
+    // 2. Click (Button press)
+    const sClick = "data:audio/wav;base64,UklGRjIAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoAAACAAAAAgAAAAAA=";
+    // 3. Receive (Ping)
+    const sPing = "data:audio/mp3;base64,//uQZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWgAAAA0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABMmYXbWxpbmUAbXAzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//uQZAAP8AAAaQAAAAgAAA0gAAABAAABpAAAACAAADSAAAAEqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq";
 
     let state = {
         avatar: defBot,
         quests: [
-            { type: 'text', q: 'Сколько будет 2+2?', a: '4', opts: '' },
-            { type: 'choice', q: 'Столица Франции?', a: 'Париж', opts: 'Лондон,Париж,Берлин' }
+            { type: 'text', q: 'Сколько будет 2+2?', a: '4', opts: '', img: null, aud: null },
+            { type: 'choice', q: 'Столица Франции?', a: 'Париж', opts: 'Лондон,Париж,Берлин', img: null, aud: null }
         ],
         chatOpen: false,
         gameActive: false,
@@ -204,8 +224,17 @@
         msgLose: document.getElementById('inp-lose'),
         code: document.getElementById('output-code'),
         copy: document.getElementById('btn-copy'),
-        label: document.getElementById('label-img')
+        label: document.getElementById('label-img'),
+        // audio preview
+        auType: document.getElementById('prev-aud-type'),
+        auClick: document.getElementById('prev-aud-click'),
+        auPing: document.getElementById('prev-aud-ping')
     };
+
+    // Setup preview audio
+    els.auType.src = sType;
+    els.auClick.src = sClick;
+    els.auPing.src = sPing;
 
     // --- EDITOR LOGIC ---
     function renderQuests() {
@@ -237,6 +266,26 @@
             qGrp.appendChild(inpQ);
             card.appendChild(qGrp);
 
+            // Media Buttons
+            const mBar = document.createElement('div'); mBar.className = 'q-media-bar';
+            
+            // Image Upload
+            const lbImg = document.createElement('label'); lbImg.className = 'media-btn' + (q.img ? ' active' : '');
+            lbImg.innerHTML = `🖼️ ${q.img ? 'Есть фото' : 'Фото'}`;
+            const fiImg = document.createElement('input'); fiImg.type='file'; fiImg.accept='image/*'; fiImg.className='file-input';
+            fiImg.onchange = (e) => updateQuestMedia(i, 'img', e.target.files[0]);
+            lbImg.appendChild(fiImg);
+            
+            // Audio Upload
+            const lbAud = document.createElement('label'); lbAud.className = 'media-btn' + (q.aud ? ' active' : '');
+            lbAud.innerHTML = `🎵 ${q.aud ? 'Есть аудио' : 'Аудио'}`;
+            const fiAud = document.createElement('input'); fiAud.type='file'; fiAud.accept='audio/*'; fiAud.className='file-input';
+            fiAud.onchange = (e) => updateQuestMedia(i, 'aud', e.target.files[0]);
+            lbAud.appendChild(fiAud);
+
+            mBar.appendChild(lbImg); mBar.appendChild(lbAud);
+            card.appendChild(mBar);
+
             // Options (if choice)
             if (q.type === 'choice') {
                 const oGrp = mkInpGroup('Варианты (через запятую):');
@@ -265,8 +314,19 @@
     }
 
     window.addQuest = () => {
-        state.quests.push({ type: 'text', q: '', a: '', opts: '' });
+        state.quests.push({ type: 'text', q: '', a: '', opts: '', img: null, aud: null });
         renderQuests();
+    };
+
+    window.updateQuestMedia = (idx, type, file) => {
+        if(!file) return;
+        if(file.size > 2*1024*1024) { alert("Файл слишком большой (>2MB)"); return; }
+        const r = new FileReader();
+        r.onload = v => {
+            state.quests[idx][type] = v.target.result;
+            renderQuests(); // Update UI to show active state
+        };
+        r.readAsDataURL(file);
     };
 
     els.imgInp.onchange = e => {
@@ -287,10 +347,18 @@
     els.prevHead.src = state.avatar;
 
     // --- PREVIEW SIMULATION ---
+    // Helper to play preview sounds
+    function playPrevSound(type) {
+        const a = type===1 ? els.auClick : (type===2 ? els.auPing : els.auType);
+        a.currentTime = 0;
+        a.play().catch(e=>{});
+    }
+
     window.toggleChat = () => {
         state.chatOpen = !state.chatOpen;
         if(state.chatOpen) {
             els.chatWin.classList.add('open');
+            playPrevSound(1); // Click sound
             startSim();
         } else {
             els.chatWin.classList.remove('open');
@@ -342,7 +410,7 @@
         }
 
         const q = state.quests[state.qIndex];
-        addMsg('bot', q.q);
+        addMsg('bot', q.q, q.img, q.aud);
         
         if(q.type === 'choice') {
             els.inpArea.style.display = 'none';
@@ -369,6 +437,8 @@
 
     function handleAns(ans) {
         if(!state.gameActive) return;
+        
+        playPrevSound(3); // Typewriter sound
         addMsg('user', ans);
         
         // Remove old buttons
@@ -387,14 +457,32 @@
         }
     }
 
-    function addMsg(role, txt) {
+    function addMsg(role, txt, img, aud) {
+        if(role === 'bot') playPrevSound(2); // Ping
+
         const d = document.createElement('div'); d.className=`message msg-${role}`;
         const im = document.createElement('img'); im.className='msg-avatar'; im.src = role==='bot'?state.avatar:defUser;
+        
+        const cont = document.createElement('div'); cont.className = 'bubble-cont';
+        
         const b = document.createElement('div'); b.className='bubble';
         if(role==='user') b.style.background = els.accent.value;
         b.innerText = txt;
-        d.appendChild(im); d.appendChild(b);
-        if(role==='user') d.insertBefore(b, im);
+        cont.appendChild(b);
+
+        if(img) {
+            const md = document.createElement('div'); md.className='chat-media';
+            md.innerHTML = `<img src="${img}">`;
+            cont.appendChild(md);
+        }
+        if(aud) {
+            const ad = document.createElement('audio'); ad.className='chat-audio';
+            ad.controls=true; ad.src=aud;
+            cont.appendChild(ad);
+        }
+
+        d.appendChild(im); d.appendChild(cont);
+        if(role==='user') d.insertBefore(cont, im);
         els.msgs.appendChild(d);
         els.msgs.scrollTop = els.msgs.scrollHeight;
     }
@@ -453,9 +541,14 @@
 #${uid} .bot { align-self:flex-start; }
 #${uid} .usr { align-self:flex-end; flex-direction:row-reverse; }
 #${uid} .av { width:24px; height:24px; border-radius:50%; object-fit:cover; flex-shrink:0; }
+#${uid} .cnt { display:flex; flex-direction:column; gap:4px; max-width:100%; }
 #${uid} .txt { padding:8px 12px; border-radius:15px; word-wrap:break-word; }
 #${uid} .bot .txt { background:rgba(255,255,255,0.1); border-bottom-left-radius:2px; }
 #${uid} .usr .txt { background:${data.col}; color:#fff; border-bottom-right-radius:2px; }
+
+#${uid} .med { border-radius:8px; overflow:hidden; border:1px solid rgba(255,255,255,0.2); margin-top:4px; }
+#${uid} .med img { width:100%; display:block; }
+#${uid} audio { width:100%; height:30px; margin-top:4px; }
 
 #${uid} .opts { display:flex; flex-wrap:wrap; gap:6px; margin-left:34px; margin-top:-5px; }
 #${uid} .btn-o { background:transparent; border:1px solid ${data.col}; color:white; padding:6px 12px; border-radius:15px; cursor:pointer; font-size:12px; }
@@ -496,16 +589,23 @@
     
     var idx=0, act=false, iv=null, rem=0;
 
-    r.onclick = function(){ w.classList.add('show'); r.style.opacity='0'; r.style.pointerEvents='none'; if(!act) start(); };
+    r.onclick = function(){ w.classList.add('show'); r.style.opacity='0'; r.style.pointerEvents='none'; snd(1); if(!act) start(); };
     c.onclick = function(){ w.classList.remove('show'); r.style.opacity='1'; r.style.pointerEvents='all'; clearInterval(iv); };
     
     function snd(t){ var x=t==1?s1:(t==2?s2:s3); x.currentTime=0; x.play().catch(function(){}); }
 
-    function add(who, txt) {
+    function add(who, txt, img, aud) {
         var d=document.createElement('div'); d.className='row '+who;
         var im=document.createElement('img'); im.className='av'; im.src=who==='bot'?C.av:C.us;
+        var cnt=document.createElement('div'); cnt.className='cnt';
+        
         var t=document.createElement('div'); t.className='txt'; t.innerText=txt;
-        d.appendChild(im); d.appendChild(t); if(who==='usr') d.insertBefore(t, im);
+        cnt.appendChild(t);
+
+        if(img) { var md=document.createElement('div'); md.className='med'; md.innerHTML='<img src="'+img+'">'; cnt.appendChild(md); }
+        if(aud) { var ad=document.createElement('audio'); ad.controls=true; ad.src=aud; cnt.appendChild(ad); }
+
+        d.appendChild(im); d.appendChild(cnt); if(who==='usr') d.insertBefore(cnt, im);
         l.appendChild(d); l.scrollTop=l.scrollHeight;
     }
 
@@ -520,9 +620,8 @@
     function ask() {
         if(idx>=C.qs.length) { end(true); return; }
         var q=C.qs[idx];
-        snd(2); add('bot', q.q);
+        snd(2); add('bot', q.q, q.img, q.aud);
         
-        // clean options
         var oo=l.querySelectorAll('.opts'); for(var k=0;k<oo.length;k++) oo[k].remove();
 
         if(q.type==='choice') {
@@ -544,7 +643,6 @@
         if(!act) return;
         snd(3); add('usr', v);
         var cor = C.qs[idx].a.trim().toLowerCase();
-        // clean opts
         var oo=l.querySelectorAll('.opts'); for(var k=0;k<oo.length;k++) oo[k].remove();
         
         if(v.toLowerCase()===cor) {
@@ -571,3 +669,10 @@
 </script>
 </body>
 </html>
+        
+          
+            
+   
+        
+  
+
