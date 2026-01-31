@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Генератор Аватара для Genially</title>
+    <title>Генератор Аватара (Fix Design)</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     
     <style>
@@ -14,32 +14,50 @@
         .editor-layout { display: flex; flex-wrap: wrap; gap: 30px; }
         .col { flex: 1; min-width: 320px; padding: 20px; background: rgba(0,0,0,0.2); border-radius: 15px; border: 1px solid var(--border); }
         
-        /* Preview Styles */
-        #preview-box { height: 350px; display: flex; justify-content: center; align-items: center; position: relative; }
-        #avatar-wrapper { width: 250px; height: 250px; position: relative; transition: all 0.3s; display: flex; justify-content: center; align-items: center; }
-        #avatar-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 4px solid var(--border); display: none; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
-        #placeholder { border: 2px dashed var(--border); border-radius: 50%; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #aaa; text-align: center; }
+        /* Preview Box - имитирует Genially */
+        #preview-box { height: 400px; display: flex; justify-content: center; align-items: center; position: relative; background: radial-gradient(circle at center, #2a1a4a 0%, #120C1C 70%); border-radius: 10px; overflow: hidden; }
         
-        /* Controls */
-        .p-controls { display: flex; justify-content: center; gap: 20px; margin-top: 20px; }
-        .p-btn { background: none; border: none; color: white; cursor: pointer; transition: 0.3s; opacity: 0.7; }
-        .p-btn:hover { opacity: 1; transform: scale(1.1); }
-        .play-main { width: 60px; height: 60px; background: linear-gradient(145deg, var(--primary), var(--accent)); border-radius: 50%; display: flex; align-items: center; justify-content: center; opacity: 1; box-shadow: 0 0 15px var(--primary); }
-        .p-btn svg { width: 30px; height: 30px; }
+        /* Внутренние стили превью, чтобы было видно как в Genially */
+        .preview-content {
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; width: 100%; height: 100%;
+        }
+        .ring-container {
+            position: relative;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            display: flex; justify-content: center; align-items: center;
+            transition: box-shadow 0.3s ease;
+        }
+        .avatar-img {
+            width: 90%; height: 90%; border-radius: 50%; object-fit: cover;
+            display: none; /* Скрыто пока нет фото */
+        }
+        .placeholder-text { color: #aaa; font-size: 0.8rem; text-align: center; position: absolute; }
+
+        .controls-row { display: flex; align-items: center; gap: 20px; }
+        .c-btn { background: none; border: none; cursor: pointer; color: white; opacity: 0.8; transition: 0.2s; display: flex; align-items: center; justify-content: center; }
+        .c-btn:hover { transform: scale(1.1); opacity: 1; }
+        .play-big {
+            width: 60px; height: 60px; border-radius: 50%;
+            background: linear-gradient(135deg, #a960ec, #f72585);
+            box-shadow: 0 5px 20px rgba(247, 37, 133, 0.4);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .play-big svg { width: 30px; height: 30px; fill: white; margin-left: 4px; } /* margin fix for play triangle */
+        .arrow-btn svg { width: 30px; height: 30px; fill: white; }
 
         /* Inputs */
-        .file-input { display: none; }
         .custom-file { display: block; padding: 12px; background: var(--bg); border: 1px dashed var(--border); text-align: center; cursor: pointer; margin-bottom: 15px; border-radius: 8px; transition: 0.3s; }
         .custom-file:hover { border-color: var(--primary); }
-        .label-text { display: block; margin-bottom: 5px; font-weight: 600; font-size: 0.9em; }
+        .file-input { display: none; }
+        .label-text { display: block; margin-bottom: 5px; font-weight: 600; font-size: 0.9em; margin-top: 15px; }
         
-        /* Action Buttons */
+        /* Buttons */
         .actions { margin-top: 30px; display: flex; flex-direction: column; gap: 15px; align-items: center; }
-        .btn { padding: 12px 25px; border: none; border-radius: 50px; font-weight: 600; cursor: pointer; transition: 0.3s; width: 100%; max-width: 400px; font-size: 1rem; }
+        .btn { padding: 12px 25px; border: none; border-radius: 50px; font-weight: 600; cursor: pointer; transition: 0.3s; width: 100%; max-width: 400px; }
         #btn-copy { background: linear-gradient(90deg, #A450F3, #F72585); color: white; box-shadow: 0 0 15px var(--primary); }
         #btn-download { background: transparent; border: 2px solid var(--border); color: var(--text); }
         .btn:hover { transform: translateY(-2px); filter: brightness(1.2); }
-        
         textarea { width: 100%; height: 100px; background: #0b0711; border: 1px solid var(--border); color: #888; margin-top: 15px; border-radius: 8px; padding: 10px; font-family: monospace; font-size: 12px; resize: none; }
     </style>
 </head>
@@ -53,15 +71,18 @@
         <div class="col">
             <h3 style="text-align:center">Предпросмотр</h3>
             <div id="preview-box">
-                <div id="avatar-wrapper">
-                    <div id="placeholder">Нет изображения</div>
-                    <img id="avatar-img">
+                <!-- Внутренняя структура превью -->
+                <div class="preview-content">
+                    <div class="ring-container" id="prev-ring" style="width: 200px; height: 200px;">
+                        <span class="placeholder-text" id="prev-placeholder">Нет фото</span>
+                        <img id="prev-img" class="avatar-img">
+                    </div>
+                    <div class="controls-row">
+                        <button class="c-btn arrow-btn" id="prev-b-back"><svg viewBox="0 0 24 24"><path d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z"/></svg></button>
+                        <button class="c-btn play-big" id="prev-b-play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+                        <button class="c-btn arrow-btn" id="prev-b-next"><svg viewBox="0 0 24 24"><path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/></svg></button>
+                    </div>
                 </div>
-            </div>
-            <div class="p-controls">
-                <button class="p-btn" id="prev"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z"/></svg></button>
-                <button class="p-btn play-main" id="play"></button>
-                <button class="p-btn" id="next"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/></svg></button>
             </div>
         </div>
 
@@ -79,21 +100,18 @@
                 <input type="file" id="inp-aud" accept="audio/*,video/mp4" class="file-input">
             </label>
 
-            <span class="label-text">Размер: <span id="val-size">250px</span></span>
-            <input type="range" id="rng-size" min="150" max="400" value="250" style="width:100%">
+            <span class="label-text">Цвет свечения:</span>
+            <input type="color" id="inp-color" value="#F72585" style="width:100%; height:40px; border:none; background:none; cursor:pointer;">
             
-            <span class="label-text" style="margin-top:10px">Цвет свечения:</span>
-            <input type="color" id="inp-color" value="#F72585" style="width:100%; height:40px; border:none; background:none;">
-            
-            <span class="label-text" style="margin-top:10px">Сила свечения:</span>
-            <input type="range" id="rng-glow" min="1" max="20" value="10" style="width:100%">
+            <span class="label-text">Интенсивность свечения:</span>
+            <input type="range" id="rng-glow" min="10" max="50" value="20" style="width:100%">
         </div>
     </div>
 
     <div class="actions">
-        <button id="btn-copy" class="btn">📋 Скопировать код (для вставки Embed)</button>
-        <button id="btn-download" class="btn">💾 Скачать HTML файл (для ссылки GitHub)</button>
-        <textarea id="output-code" readonly placeholder="Здесь появится код..."></textarea>
+        <button id="btn-copy" class="btn">📋 Скопировать код (Вставка Embed)</button>
+        <button id="btn-download" class="btn">💾 Скачать HTML (Для GitHub)</button>
+        <textarea id="output-code" readonly placeholder="Код появится здесь..."></textarea>
     </div>
 </div>
 
@@ -102,166 +120,256 @@
 <script>
     // Elements
     const els = {
-        imgInp: document.getElementById('inp-img'),
-        audInp: document.getElementById('inp-aud'),
-        imgName: document.getElementById('img-name'),
-        audName: document.getElementById('aud-name'),
-        avatarImg: document.getElementById('avatar-img'),
-        placeholder: document.getElementById('placeholder'),
-        wrapper: document.getElementById('avatar-wrapper'),
+        inpImg: document.getElementById('inp-img'),
+        inpAud: document.getElementById('inp-aud'),
+        prevImg: document.getElementById('prev-img'),
+        prevPlace: document.getElementById('prev-placeholder'),
+        prevRing: document.getElementById('prev-ring'),
         audio: document.getElementById('main-audio'),
-        playBtn: document.getElementById('play'),
-        sizeRng: document.getElementById('rng-size'),
-        colorInp: document.getElementById('inp-color'),
-        glowRng: document.getElementById('rng-glow'),
-        outArea: document.getElementById('output-code'),
+        btnPlay: document.getElementById('prev-b-play'),
+        color: document.getElementById('inp-color'),
+        glow: document.getElementById('rng-glow'),
+        outCode: document.getElementById('output-code'),
         btnCopy: document.getElementById('btn-copy'),
         btnDown: document.getElementById('btn-download')
     };
 
-    let state = { img: '', audio: '' };
-    const icons = {
-        play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>',
-        pause: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>'
-    };
-    els.playBtn.innerHTML = icons.play;
+    let state = { img: null, audio: null };
 
-    // Functions
-    const read = (file, type) => {
+    // File Reading
+    const readFile = (file, type) => {
         const reader = new FileReader();
         reader.onload = e => {
             state[type] = e.target.result;
             if(type === 'img') {
-                els.avatarImg.src = state.img;
-                els.avatarImg.style.display = 'block';
-                els.placeholder.style.display = 'none';
+                els.prevImg.src = state.img;
+                els.prevImg.style.display = 'block';
+                els.prevPlace.style.display = 'none';
             } else {
                 els.audio.src = state.audio;
+                document.getElementById('aud-name').innerText = "✅ Аудио загружено";
             }
         };
         reader.readAsDataURL(file);
     };
 
+    els.inpImg.onchange = e => { if(e.target.files[0]) readFile(e.target.files[0], 'img'); };
+    els.inpAud.onchange = e => { if(e.target.files[0]) readFile(e.target.files[0], 'audio'); };
+
+    // Preview Logic
     const updatePreview = () => {
-        const size = els.sizeRng.value;
-        const color = els.colorInp.value;
-        const glow = els.glowRng.value;
+        const color = els.color.value;
+        const glowSize = els.glow.value;
+        const isPlaying = !els.audio.paused;
         
-        document.getElementById('val-size').innerText = size + 'px';
-        els.wrapper.style.width = size + 'px';
-        els.wrapper.style.height = size + 'px';
-        
-        // Dynamic CSS var update for preview logic handled by class
-        const shadow = `0 0 ${glow * 1.5}px ${color}`;
-        if(!els.audio.paused) els.wrapper.style.filter = `drop-shadow(${shadow})`;
-        else els.wrapper.style.filter = 'none';
+        if(isPlaying) {
+            els.prevRing.style.boxShadow = `0 0 ${glowSize}px ${color}, inset 0 0 ${glowSize/2}px ${color}`;
+            els.prevRing.style.borderColor = color;
+        } else {
+            els.prevRing.style.boxShadow = 'none';
+            els.prevRing.style.borderColor = 'rgba(255,255,255,0.1)';
+        }
     };
 
-    // Listeners
-    els.imgInp.onchange = e => { 
-        if(e.target.files[0]) {
-            read(e.target.files[0], 'img'); 
-            els.imgName.innerText = '✅ ' + e.target.files[0].name;
-        }
-    };
-    els.audInp.onchange = e => { 
-        if(e.target.files[0]) {
-            read(e.target.files[0], 'audio'); 
-            els.audName.innerText = '✅ ' + e.target.files[0].name;
-        }
-    };
-    [els.sizeRng, els.colorInp, els.glowRng].forEach(el => el.oninput = updatePreview);
+    // Play/Pause logic for Preview
+    const togglePlay = () => els.audio.paused ? els.audio.play() : els.audio.pause();
+    els.btnPlay.onclick = togglePlay;
     
-    // Audio Logic
-    const toggle = () => els.audio.paused ? els.audio.play() : els.audio.pause();
-    els.playBtn.onclick = toggle;
-    els.wrapper.onclick = toggle;
-    els.audio.onplay = () => { els.playBtn.innerHTML = icons.pause; updatePreview(); };
-    els.audio.onpause = () => { els.playBtn.innerHTML = icons.play; updatePreview(); };
-    els.audio.onended = () => { els.playBtn.innerHTML = icons.play; updatePreview(); };
+    const iconPlay = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+    const iconPause = '<svg viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
 
-    // GENERATOR CORE
+    els.audio.onplay = () => { els.btnPlay.innerHTML = iconPause; updatePreview(); };
+    els.audio.onpause = () => { els.btnPlay.innerHTML = iconPlay; updatePreview(); };
+    els.audio.onended = () => { els.btnPlay.innerHTML = iconPlay; updatePreview(); };
+    
+    [els.color, els.glow].forEach(el => el.oninput = updatePreview);
+
+    // --- HTML GENERATOR ---
     const generateHTML = () => {
-        if(!state.img || !state.audio) { alert('Сначала загрузите картинку и аудио!'); return null; }
-        
-        const uid = 'w-' + Math.random().toString(36).substr(2, 9);
-        const size = els.sizeRng.value;
-        const color = els.colorInp.value;
-        const glow = els.glowRng.value * 1.5;
+        if(!state.img || !state.audio) { alert("Загрузите картинку и аудио!"); return null; }
 
+        const color = els.color.value;
+        const glowSize = els.glow.value;
+        // Уникальный ID чтобы стили не смешивались
+        const uid = "gen-" + Math.random().toString(36).substr(2, 6);
+
+        // Мы используем height: 100% и flexbox, чтобы контент занимал весь iframe в Genially
+        // Адаптивные размеры через vmin (зависит от меньшей стороны экрана/iframe)
         return `
-<div id="${uid}" style="width:100%;height:100%;display:flex;justify-content:center;align-items:center;background:transparent;font-family:sans-serif;">
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;overflow:hidden;background:transparent;width:100vw;height:100vh;">
+
 <style>
-#${uid} .av-wrap { width:${size}px; height:${size}px; border-radius:50%; position:relative; transition:filter 0.3s; cursor:pointer; padding:5px; }
-#${uid} .av-wrap.speak { filter: drop-shadow(0 0 ${glow}px ${color}); }
-#${uid} img { width:100%; height:100%; border-radius:50%; object-fit:cover; display:block; }
-#${uid} .ctrls { display:flex; gap:15px; margin-top:10px; justify-content:center; width:100%; }
-#${uid} btn { background:none; border:none; cursor:pointer; color:white; opacity:0.8; transition:0.3s; }
-#${uid} btn:hover { transform:scale(1.1); opacity:1; }
-#${uid} .p-main { width:50px; height:50px; background:linear-gradient(145deg, #a960ec, #f72585); border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(0,0,0,0.3); }
-#${uid} svg { width:28px; height:28px; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
+    #${uid} {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        font-family: sans-serif;
+        box-sizing: border-box;
+        /* Если виджет слишком маленький, используем scale */
+    }
+
+    /* Аватар в круге */
+    #${uid} .ring {
+        position: relative;
+        width: 65vmin; /* Адаптивный размер: 65% от меньшей стороны */
+        height: 65vmin;
+        max-width: 400px; max-height: 400px;
+        border-radius: 50%;
+        border: 2px solid rgba(255,255,255,0.15);
+        display: flex; justify-content: center; align-items: center;
+        transition: all 0.4s ease;
+        margin-bottom: 20px; /* Отступ до кнопок */
+        cursor: pointer;
+    }
+    
+    #${uid} .ring.playing {
+        border-color: ${color};
+        box-shadow: 0 0 ${glowSize}px ${color}, inset 0 0 ${glowSize/3}px ${color};
+        transform: scale(1.02);
+    }
+
+    #${uid} .avatar {
+        width: 92%; height: 92%;
+        border-radius: 50%;
+        object-fit: cover;
+        pointer-events: none; /* Клик проходит сквозь картинку на кольцо */
+    }
+
+    /* Панель управления */
+    #${uid} .controls {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 25px;
+        width: 100%;
+    }
+
+    #${uid} button {
+        background: none; border: none; padding: 0; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        transition: transform 0.2s;
+        -webkit-tap-highlight-color: transparent;
+    }
+    
+    #${uid} button:hover { transform: scale(1.1); }
+    #${uid} button:active { transform: scale(0.95); }
+
+    /* Кнопка Play */
+    #${uid} .btn-play {
+        width: 60px; height: 60px; /* Фиксированный размер кнопки */
+        border-radius: 50%;
+        background: linear-gradient(135deg, #a960ec, #f72585);
+        box-shadow: 0 4px 15px rgba(247, 37, 133, 0.5);
+    }
+    #${uid} .btn-play svg {
+        width: 28px; height: 28px; fill: white;
+    }
+    /* Поправка для треугольника Play (визуальный центр) */
+    #${uid} .btn-play svg.is-play { margin-left: 4px; } 
+
+    /* Стрелки */
+    #${uid} .btn-arrow svg {
+        width: 32px; height: 32px; fill: white; opacity: 0.8; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3));
+    }
+    #${uid} .btn-arrow:hover svg { opacity: 1; }
+
 </style>
-<div style="display:flex;flex-direction:column;align-items:center;">
-    <div class="av-wrap"><img src="${state.img}"></div>
-    <div class="ctrls">
-        <btn class="b-prev"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z"/></svg></btn>
-        <btn class="p-main"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></btn>
-        <btn class="b-next"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/></svg></btn>
+
+<div id="${uid}">
+    <div class="ring">
+        <img class="avatar" src="${state.img}">
     </div>
-    <audio src="${state.audio}" style="display:none"></audio>
+    
+    <div class="controls">
+        <button class="btn-arrow" id="prev-${uid}"><svg viewBox="0 0 24 24"><path d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z"/></svg></button>
+        
+        <button class="btn-play" id="play-${uid}">
+            <svg class="is-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+        </button>
+        
+        <button class="btn-arrow" id="next-${uid}"><svg viewBox="0 0 24 24"><path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/></svg></button>
+    </div>
+    
+    <audio id="audio-${uid}" src="${state.audio}" style="display:none"></audio>
 </div>
+
 <script>
-(function(){
+(function() {
     var root = document.getElementById('${uid}');
-    var a = root.querySelector('audio'), w = root.querySelector('.av-wrap'), p = root.querySelector('.p-main');
-    var iPlay = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
-    var iPause = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
-    var t = () => a.paused ? a.play() : a.pause();
-    p.onclick = w.onclick = t;
-    root.querySelector('.b-prev').onclick = () => a.currentTime = Math.max(0, a.currentTime - 5);
-    root.querySelector('.b-next').onclick = () => a.currentTime += 5;
-    a.onplay = () => { p.innerHTML = iPause; w.classList.add('speak'); };
-    a.onpause = () => { p.innerHTML = iPlay; w.classList.remove('speak'); };
-    a.onended = () => { p.innerHTML = iPlay; w.classList.remove('speak'); };
+    var audio = document.getElementById('audio-${uid}');
+    var ring = root.querySelector('.ring');
+    var playBtn = document.getElementById('play-${uid}');
+    var prevBtn = document.getElementById('prev-${uid}');
+    var nextBtn = document.getElementById('next-${uid}');
+    
+    var svgPlay = '<svg class="is-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+    var svgPause = '<svg viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
+
+    function toggle() {
+        if(audio.paused) audio.play();
+        else audio.pause();
+    }
+
+    playBtn.onclick = toggle;
+    ring.onclick = toggle;
+
+    prevBtn.onclick = function() { audio.currentTime = Math.max(0, audio.currentTime - 5); };
+    nextBtn.onclick = function() { audio.currentTime += 5; };
+
+    audio.onplay = function() {
+        playBtn.innerHTML = svgPause;
+        ring.classList.add('playing');
+    };
+    
+    audio.onpause = function() {
+        playBtn.innerHTML = svgPlay;
+        ring.classList.remove('playing');
+    };
+    
+    audio.onended = function() {
+        playBtn.innerHTML = svgPlay;
+        ring.classList.remove('playing');
+    };
 })();
 <\/script>
-</div>`;
+</body>
+</html>`;
     };
 
-    // Button Actions
+    // Export Handlers
     els.btnCopy.onclick = () => {
-        const code = generateHTML();
-        if(!code) return;
-        els.outArea.value = code;
-        els.outArea.select();
-        
+        const html = generateHTML();
+        if(!html) return;
+        els.outCode.value = html;
+        els.outCode.select();
         try {
             document.execCommand('copy');
-            els.btnCopy.innerText = "✅ Код скопирован! Вставьте в Genially (Insert > Others)";
+            els.btnCopy.innerText = "✅ Скопировано! Вставьте в Genially";
         } catch(e) {
-            els.btnCopy.innerText = "❌ Ошибка копирования. Нажмите Ctrl+C";
+            alert("Нажмите Ctrl+C чтобы скопировать");
         }
-        setTimeout(() => els.btnCopy.innerText = "📋 Скопировать код (для вставки Embed)", 4000);
+        setTimeout(() => els.btnCopy.innerText = "📋 Скопировать код (Вставка Embed)", 3000);
     };
 
     els.btnDown.onclick = () => {
-        const code = generateHTML();
-        if(!code) return;
-        
-        // Create a standalone HTML file
-        const fullPage = `<!DOCTYPE html><html><body style="margin:0;background:transparent;display:flex;justify-content:center;align-items:center;min-height:100vh">${code}</body></html>`;
-        
-        const blob = new Blob([fullPage], {type: 'text/html'});
+        const html = generateHTML();
+        if(!html) return;
+        const blob = new Blob([html], {type: 'text/html'});
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = "my-avatar-widget.html";
+        a.download = "genially-avatar-widget.html";
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-        els.btnDown.innerText = "✅ Файл скачан! Загрузите его на GitHub";
-        setTimeout(() => els.btnDown.innerText = "💾 Скачать HTML файл (для ссылки GitHub)", 4000);
     };
+
 </script>
 </body>
 </html>
