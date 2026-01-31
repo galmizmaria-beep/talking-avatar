@@ -92,195 +92,251 @@
     <audio id="audio-player" style="display:none;"></audio>
 
     <script>
-        const params = new URLSearchParams(window.location.search);
-        const mode = params.get('mode');
+        document.addEventListener('DOMContentLoaded', () => {
+            const getCodeBtn = document.getElementById('get-code-btn');
+            const generatedCode = document.getElementById('generated-code');
+            const imageUpload = document.getElementById('image-upload');
+            const audioUpload = document.getElementById('audio-upload');
+            const imageFileName = document.getElementById('image-file-name');
+            const audioFileName = document.getElementById('audio-file-name');
+            const sizeSlider = document.getElementById('size-slider');
+            const sizeValue = document.getElementById('size-value');
+            const glowColorInput = document.getElementById('glow-color');
+            const glowIntensitySlider = document.getElementById('glow-intensity-slider');
+            const glowIntensityValue = document.getElementById('glow-intensity-value');
+            const avatarContainer = document.getElementById('avatar-container');
+            const imagePlaceholder = document.getElementById('image-placeholder');
+            const avatarImage = document.getElementById('avatar-image');
+            const audioPlayer = document.getElementById('audio-player');
+            const btnPlayPause = document.getElementById('btn-play-pause');
+            const btnBackward = document.getElementById('btn-backward');
+            const btnForward = document.getElementById('btn-forward');
 
-        if (mode === 'player') {
-            // *** РЕЖИМ ПЛЕЕРА ***
-            document.getElementById('editor-container').style.display = 'none';
-            document.body.style.padding = '0';
-            document.body.style.background = 'transparent';
+            const playIcon = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>`;
+            const pauseIcon = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>`;
+            let imageDataUrl = '';
+            let audioDataUrl = '';
+            const originalButtonText = getCodeBtn.textContent;
 
-            const size = params.get('size') || '250';
-            const glowColor = decodeURIComponent(params.get('color')) || '#F72585';
-            const intensity = params.get('intensity') || '10';
-            const imageData = decodeURIComponent(params.get('img'));
-            const audioData = decodeURIComponent(params.get('audio'));
-            const blur = 10 + parseFloat(intensity) * 1.5;
-            const spread = 2 + parseFloat(intensity) * 0.5;
+            btnPlayPause.innerHTML = playIcon;
 
-            const playerHTML = `
-                <style>
-                    :root{--glow-color:${glowColor};--blur:${blur}px;--spread:${spread}px}
-                    body,html{margin:0;padding:0;width:100%;height:100%;background:transparent;overflow:hidden;font-family:sans-serif;display:flex;justify-content:center;align-items:center}
-                    .player-widget{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10%}
-                    .avatar-wrapper{width:70%;height:70%;border-radius:50%;padding:5px;position:relative;transition:filter .4s ease;cursor:pointer}.avatar-wrapper.speaking{filter:drop-shadow(0 0 var(--blur) var(--glow-color))}
-                    #avatar-img{width:100%;height:100%;border-radius:50%;object-fit:cover}
-                    .controls{display:flex;align-items:center;justify-content:center;gap:15%;width:80%}
-                    .ctrl-btn{background:none;border:none;padding:0;cursor:pointer;color:white;opacity:.7;transition:all .3s}.ctrl-btn:hover{opacity:1;transform:scale(1.1)}
-                    .ctrl-btn svg{width:1.8em;height:1.8em}
-                    #play-pause-btn{width:4em;height:4em;border-radius:50%;background:linear-gradient(145deg, #a960ec, #f72585);opacity:1}
-                    #play-pause-btn svg{width:2em;height:2em;margin-left:3px}
-                </style>
-                <div class="player-widget">
-                    <div id="avatar-wrapper" class="avatar-wrapper"><img id="avatar-img" src="${imageData}"></div>
-                    <div class="controls">
-                        <button id="prev-btn" class="ctrl-btn"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z"/></svg></button>
-                        <button id="play-pause-btn" class="ctrl-btn"></button>
-                        <button id="next-btn" class="ctrl-btn"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/></svg></button>
-                    </div>
-                </div>
-            `;
-            document.body.innerHTML = playerHTML;
-
-            const wrapper=document.getElementById('avatar-wrapper'),btn=document.getElementById('play-pause-btn'),prev=document.getElementById('prev-btn'),next=document.getElementById('next-btn'),audio=new Audio(audioData);
-            const playI='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>',pauseI='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
-            btn.innerHTML=playI;
-            const togglePlay=()=>{audio.paused?audio.play():audio.pause()};
-            btn.addEventListener('click',togglePlay);
-            wrapper.addEventListener('click',togglePlay);
-            prev.addEventListener('click',()=>{audio.currentTime=Math.max(0,audio.currentTime-5)});
-            next.addEventListener('click',()=>{audio.currentTime+=5});
-            audio.addEventListener('play',()=>{btn.innerHTML=pauseI;wrapper.classList.add('speaking')});
-            audio.addEventListener('pause',()=>{btn.innerHTML=playI;wrapper.classList.remove('speaking')});
-            audio.addEventListener('ended',()=>{btn.innerHTML=playI;wrapper.classList.remove('speaking')});
-
-        } else {
-            // *** РЕЖИМ РЕДАКТОРА ***
-            document.addEventListener('DOMContentLoaded', () => {
-                const getCodeBtn = document.getElementById('get-code-btn');
-                const generatedCode = document.getElementById('generated-code');
-                const imageUpload = document.getElementById('image-upload');
-                const audioUpload = document.getElementById('audio-upload');
-                const imageFileName = document.getElementById('image-file-name');
-                const audioFileName = document.getElementById('audio-file-name');
-                const sizeSlider = document.getElementById('size-slider');
-                const sizeValue = document.getElementById('size-value');
-                const glowColorInput = document.getElementById('glow-color');
-                const glowIntensitySlider = document.getElementById('glow-intensity-slider');
-                const glowIntensityValue = document.getElementById('glow-intensity-value');
-                const avatarContainer = document.getElementById('avatar-container');
-                const imagePlaceholder = document.getElementById('image-placeholder');
-                const avatarImage = document.getElementById('avatar-image');
-                const audioPlayer = document.getElementById('audio-player');
-                const btnPlayPause = document.getElementById('btn-play-pause');
-                const btnBackward = document.getElementById('btn-backward');
-                const btnForward = document.getElementById('btn-forward');
-
-                const playIcon = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>`;
-                const pauseIcon = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>`;
-                let imageDataUrl = '';
-                let audioDataUrl = '';
-                const originalButtonText = getCodeBtn.textContent;
-
-                btnPlayPause.innerHTML = playIcon;
-
-                // Функция обработки файлов определена ДО использования
-                const handleFileSelect = (event, type) => {
-                    const file = event.target.files[0];
-                    if (!file) return;
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        if (type === 'image') {
-                            imageDataUrl = e.target.result;
-                            avatarImage.src = imageDataUrl;
-                            imagePlaceholder.style.display = 'none';
-                            avatarImage.style.display = 'block';
-                            imageFileName.textContent = file.name;
-                        } else if (type === 'audio') {
-                            audioDataUrl = e.target.result;
-                            audioPlayer.src = audioDataUrl;
-                            audioFileName.textContent = file.name;
-                        }
-                        getCodeBtn.textContent = originalButtonText;
-                        getCodeBtn.classList.remove('ready');
-                    };
-                    reader.readAsDataURL(file);
-                };
-                
-                imageUpload.addEventListener('change', (e) => handleFileSelect(e, 'image'));
-                audioUpload.addEventListener('change', (e) => handleFileSelect(e, 'audio'));
-                
-                sizeSlider.addEventListener('input', (e) => {
-                    const size = e.target.value;
-                    const avatarPreviewSize = size * 0.7;
-                    avatarContainer.style.width = `${avatarPreviewSize}px`;
-                    avatarContainer.style.height = `${avatarPreviewSize}px`;
-                    sizeValue.textContent = `${size}px`;
-                });
-                sizeSlider.dispatchEvent(new Event('input'));
-                
-                const updatePreviewGlow = () => {
-                    const color = glowColorInput.value;
-                    const intensity = glowIntensitySlider.value;
-                    avatarContainer.style.filter = `drop-shadow(0 0 ${intensity * 1.5}px ${color})`;
-                };
-                
-                [glowColorInput, glowIntensitySlider].forEach(el => el.addEventListener('input', updatePreviewGlow));
-                glowIntensitySlider.addEventListener('input', (e) => glowIntensityValue.textContent = e.target.value);
-                updatePreviewGlow();
-                
-                btnPlayPause.addEventListener('click', () => { if (!audioPlayer.src) return; if (audioPlayer.paused) audioPlayer.play(); else audioPlayer.pause(); });
-                audioPlayer.addEventListener('play', () => btnPlayPause.innerHTML = pauseIcon);
-                audioPlayer.addEventListener('pause', () => btnPlayPause.innerHTML = playIcon);
-                audioPlayer.addEventListener('ended', () => btnPlayPause.innerHTML = playIcon);
-                btnBackward.addEventListener('click', () => { if(audioPlayer.src) audioPlayer.currentTime = Math.max(0, audioPlayer.currentTime - 5); });
-                btnForward.addEventListener('click', () => { if(audioPlayer.src) audioPlayer.currentTime += 5; });
-
-                getCodeBtn.addEventListener('click', () => {
-                    if (!imageDataUrl || !audioDataUrl) {
-                        alert('Пожалуйста, загрузите и изображение, и аудиофайл.');
-                        return;
+            const handleFileSelect = (event, type) => {
+                const file = event.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    if (type === 'image') {
+                        imageDataUrl = e.target.result;
+                        avatarImage.src = imageDataUrl;
+                        imagePlaceholder.style.display = 'none';
+                        avatarImage.style.display = 'block';
+                        imageFileName.textContent = file.name;
+                    } else if (type === 'audio') {
+                        audioDataUrl = e.target.result;
+                        audioPlayer.src = audioDataUrl;
+                        audioFileName.textContent = file.name;
                     }
-                    const baseUrl = window.location.href.split('?')[0];
-                    const params = new URLSearchParams();
-                    params.append('mode', 'player');
-                    params.append('size', sizeSlider.value);
-                    params.append('color', encodeURIComponent(glowColorInput.value));
-                    params.append('intensity', glowIntensitySlider.value);
-                    params.append('img', encodeURIComponent(imageDataUrl));
-                    params.append('audio', encodeURIComponent(audioDataUrl));
-                    
-                    const playerUrl = `${baseUrl}?${params.toString()}`;
-                    const iframeCode = `<iframe src="${playerUrl}" style="width: ${sizeSlider.value}px; height: ${sizeSlider.value}px; border: none; background: transparent;" scrolling="no" allow="autoplay"></iframe>`;
-
-                    generatedCode.value = iframeCode;
-                    generatedCode.select();
-                    generatedCode.setSelectionRange(0, 99999);
-
-                    // Улучшенная логика копирования
-                    const copyToClipboard = () => {
-                        getCodeBtn.textContent = 'Код скопирован!';
-                        getCodeBtn.classList.add('ready');
-                    };
-
-                    const failCopy = () => {
-                        getCodeBtn.textContent = 'Код готов! Скопируйте (Ctrl+C)';
-                        getCodeBtn.classList.add('ready');
-                    };
-
-                    if (navigator.clipboard && window.isSecureContext) {
-                        navigator.clipboard.writeText(iframeCode).then(copyToClipboard).catch(() => {
-                            // Если API недоступен, пробуем старый метод
-                            try {
-                                document.execCommand('copy');
-                                copyToClipboard();
-                            } catch (e) {
-                                failCopy();
-                            }
-                        });
-                    } else {
-                        // Для локальных файлов и http
-                        try {
-                            document.execCommand('copy');
-                            copyToClipboard();
-                        } catch (e) {
-                            failCopy();
-                        }
-                    }
-                });
+                    getCodeBtn.textContent = originalButtonText;
+                    getCodeBtn.classList.remove('ready');
+                };
+                reader.readAsDataURL(file);
+            };
+            
+            imageUpload.addEventListener('change', (e) => handleFileSelect(e, 'image'));
+            audioUpload.addEventListener('change', (e) => handleFileSelect(e, 'audio'));
+            
+            sizeSlider.addEventListener('input', (e) => {
+                const size = e.target.value;
+                const avatarPreviewSize = size * 0.7;
+                avatarContainer.style.width = `${avatarPreviewSize}px`;
+                avatarContainer.style.height = `${avatarPreviewSize}px`;
+                sizeValue.textContent = `${size}px`;
             });
+            sizeSlider.dispatchEvent(new Event('input'));
+            
+            const updatePreviewGlow = () => {
+                const color = glowColorInput.value;
+                const intensity = glowIntensitySlider.value;
+                avatarContainer.style.filter = `drop-shadow(0 0 ${intensity * 1.5}px ${color})`;
+            };
+            
+            [glowColorInput, glowIntensitySlider].forEach(el => el.addEventListener('input', updatePreviewGlow));
+            glowIntensitySlider.addEventListener('input', (e) => glowIntensityValue.textContent = e.target.value);
+            updatePreviewGlow();
+            
+            btnPlayPause.addEventListener('click', () => { if (!audioPlayer.src) return; if (audioPlayer.paused) audioPlayer.play(); else audioPlayer.pause(); });
+            audioPlayer.addEventListener('play', () => btnPlayPause.innerHTML = pauseIcon);
+            audioPlayer.addEventListener('pause', () => btnPlayPause.innerHTML = playIcon);
+            audioPlayer.addEventListener('ended', () => btnPlayPause.innerHTML = playIcon);
+            btnBackward.addEventListener('click', () => { if(audioPlayer.src) audioPlayer.currentTime = Math.max(0, audioPlayer.currentTime - 5); });
+            btnForward.addEventListener('click', () => { if(audioPlayer.src) audioPlayer.currentTime += 5; });
+
+            // ГЕНЕРАЦИЯ КОДА (ИСПРАВЛЕННАЯ ЛОГИКА)
+            getCodeBtn.addEventListener('click', () => {
+                if (!imageDataUrl || !audioDataUrl) {
+                    alert('Пожалуйста, загрузите и изображение, и аудиофайл.');
+                    return;
+                }
+
+                const size = sizeSlider.value;
+                const glowColor = glowColorInput.value;
+                const intensity = glowIntensitySlider.value;
+                const blur = 10 + parseFloat(intensity) * 1.5;
+                
+                // Вместо iframe генерируем автономный блок div+script
+                const standaloneCode = `
+<div style="width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; background: transparent;">
+    <style>
+        .gen-player-widget {
+            --glow-c: ${glowColor};
+            --blur-v: ${blur}px;
+            width: ${size}px;
+            height: ${size}px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-family: sans-serif;
         }
+        .gen-avatar-wrapper {
+            width: 70%;
+            height: 70%;
+            border-radius: 50%;
+            padding: 5px;
+            position: relative;
+            transition: filter .4s ease;
+            cursor: pointer;
+        }
+        .gen-avatar-wrapper.speaking {
+            filter: drop-shadow(0 0 var(--blur-v) var(--glow-c));
+        }
+        .gen-avatar-img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            display: block;
+        }
+        .gen-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            width: 100%;
+        }
+        .gen-ctrl-btn {
+            background: none;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            color: white;
+            opacity: 0.8;
+            transition: all .3s;
+        }
+        .gen-ctrl-btn:hover {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+        .gen-ctrl-btn svg { width: 28px; height: 28px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
+        .gen-play-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #a960ec, #f72585);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        .gen-play-btn svg { width: 30px; height: 30px; margin-left: 2px; }
+    </style>
+
+    <div class="gen-player-widget" id="widget-${Date.now()}">
+        <div class="gen-avatar-wrapper">
+            <img class="gen-avatar-img" src="${imageDataUrl}">
+        </div>
+        <div class="gen-controls">
+            <button class="gen-ctrl-btn prev-btn"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z"/></svg></button>
+            <button class="gen-ctrl-btn gen-play-btn"></button>
+            <button class="gen-ctrl-btn next-btn"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/></svg></button>
+        </div>
+        <audio style="display:none;" src="${audioDataUrl}"></audio>
+    </div>
+
+    <script>
+        (function() {
+            // Изолированная область видимости
+            const root = document.currentScript.previousElementSibling; 
+            const wrapper = root.querySelector('.gen-avatar-wrapper');
+            const img = root.querySelector('.gen-avatar-img');
+            const playBtn = root.querySelector('.gen-play-btn');
+            const prevBtn = root.querySelector('.prev-btn');
+            const nextBtn = root.querySelector('.next-btn');
+            const audio = root.querySelector('audio');
+            
+            const playIcon = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
+            const pauseIcon = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
+            
+            playBtn.innerHTML = playIcon;
+
+            const togglePlay = () => {
+                if(audio.paused) {
+                    audio.play();
+                } else {
+                    audio.pause();
+                }
+            };
+
+            playBtn.addEventListener('click', togglePlay);
+            wrapper.addEventListener('click', togglePlay);
+            img.addEventListener('click', togglePlay);
+
+            prevBtn.addEventListener('click', () => { audio.currentTime = Math.max(0, audio.currentTime - 5); });
+            nextBtn.addEventListener('click', () => { audio.currentTime += 5; });
+
+            audio.addEventListener('play', () => {
+                playBtn.innerHTML = pauseIcon;
+                wrapper.classList.add('speaking');
+            });
+            
+            audio.addEventListener('pause', () => {
+                playBtn.innerHTML = playIcon;
+                wrapper.classList.remove('speaking');
+            });
+            
+            audio.addEventListener('ended', () => {
+                playBtn.innerHTML = playIcon;
+                wrapper.classList.remove('speaking');
+            });
+        })();
+    <\/script>
+</div>`;
+
+                generatedCode.value = standaloneCode;
+                generatedCode.select();
+                
+                const copyToClipboard = () => {
+                    getCodeBtn.textContent = 'Код скопирован!';
+                    getCodeBtn.classList.add('ready');
+                };
+                const failCopy = () => {
+                    getCodeBtn.textContent = 'Код готов! Скопируйте (Ctrl+C)';
+                    getCodeBtn.classList.add('ready');
+                };
+
+                if (navigator.clipboard && window.isSecureContext) {
+                    navigator.clipboard.writeText(standaloneCode).then(copyToClipboard).catch(failCopy);
+                } else {
+                    try {
+                        document.execCommand('copy');
+                        copyToClipboard();
+                    } catch (e) {
+                        failCopy();
+                    }
+                }
+            });
+        });
     </script>
 </body>
 </html>
