@@ -191,46 +191,13 @@
                 const blur = 10 + intensity * 1.5;
                 const spread = 2 + intensity * 0.5;
                 
-                const innerHtmlContent = `<!DOCTYPE html><html><head><style>
-                    :root{--glow-color:${glowColor};--blur:${blur}px;--spread:${spread}px}
-                    body,html{margin:0;padding:0;width:100%;height:100%;background:transparent;overflow:hidden;font-family:sans-serif;display:flex;justify-content:center;align-items:center}
-                    .player-widget{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10%}
-                    .avatar-wrapper{width:70%;height:70%;border-radius:50%;padding:5px;position:relative;transition:filter .4s ease;cursor:pointer}
-                    .avatar-wrapper.speaking{filter:drop-shadow(0 0 var(--blur) var(--glow-color))}
-                    #avatar-img{width:100%;height:100%;border-radius:50%;object-fit:cover}
-                    .controls{display:flex;align-items:center;justify-content:center;gap:15%;width:80%}
-                    .ctrl-btn{background:none;border:none;padding:0;cursor:pointer;color:white;opacity:.7;transition:all .3s}
-                    .ctrl-btn:hover{opacity:1;transform:scale(1.1)}
-                    .ctrl-btn svg{width:1.8em;height:1.8em}
-                    #play-pause-btn{width:4em;height:4em;border-radius:50%;background:linear-gradient(145deg, #a960ec, #f72585);opacity:1}
-                    #play-pause-btn svg{width:2em;height:2em;margin-left:3px}
-                </style></head><body>
-                <div class="player-widget">
-                    <div id="avatar-wrapper" class="avatar-wrapper">
-                        <img id="avatar-img" src="${imageDataUrl}">
-                    </div>
-                    <div class="controls">
-                        <button id="prev-btn" class="ctrl-btn"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z"/></svg></button>
-                        <button id="play-pause-btn" class="ctrl-btn"></button>
-                        <button id="next-btn" class="ctrl-btn"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/></svg></button>
-                    </div>
-                </div>
-                <script>
-                    const wrapper=document.getElementById('avatar-wrapper'),btn=document.getElementById('play-pause-btn'),prev=document.getElementById('prev-btn'),next=document.getElementById('next-btn'),audio=new Audio("${audioDataUrl}");
-                    const playI='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>',pauseI='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
-                    btn.innerHTML=playI;
-                    const togglePlay=()=>{audio.paused?audio.play():audio.pause()};
-                    btn.addEventListener('click',togglePlay);
-                    wrapper.addEventListener('click',togglePlay);
-                    prev.addEventListener('click',()=>{audio.currentTime=Math.max(0,audio.currentTime-5)});
-                    next.addEventListener('click',()=>{audio.currentTime+=5});
-                    audio.addEventListener('play',()=>{btn.innerHTML=pauseI;wrapper.classList.add('speaking')});
-                    audio.addEventListener('pause',()=>{btn.innerHTML=playI;wrapper.classList.remove('speaking')});
-                    audio.addEventListener('ended',()=>{btn.innerHTML=playI;wrapper.classList.remove('speaking')});
-                <\/script></body></html>`;
+                const innerHtmlContent = `<!DOCTYPE html><html><head><style>:root{--glow-color:${glowColor};--blur:${blur}px;--spread:${spread}px}body,html{margin:0;padding:0;width:100%;height:100%;background:transparent;overflow:hidden;font-family:sans-serif;display:flex;justify-content:center;align-items:center}.player-widget{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10%}.avatar-wrapper{width:70%;height:70%;border-radius:50%;padding:5px;position:relative;transition:filter .4s ease;cursor:pointer}.avatar-wrapper.speaking{filter:drop-shadow(0 0 var(--blur) var(--glow-color))}#avatar-img{width:100%;height:100%;border-radius:50%;object-fit:cover}.controls{display:flex;align-items:center;justify-content:center;gap:15%;width:80%}.ctrl-btn{background:none;border:none;padding:0;cursor:pointer;color:white;opacity:.7;transition:all .3s}.ctrl-btn:hover{opacity:1;transform:scale(1.1)}.ctrl-btn svg{width:1.8em;height:1.8em}#play-pause-btn{width:4em;height:4em;border-radius:50%;background:linear-gradient(145deg, #a960ec, #f72585);opacity:1}#play-pause-btn svg{width:2em;height:2em;margin-left:3px}</style></head><body><div class="player-widget"><div id="avatar-wrapper" class="avatar-wrapper"><img id="avatar-img" src="${imageDataUrl}"></div><div class="controls"><button id="prev-btn" class="ctrl-btn"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z"/></svg></button><button id="play-pause-btn" class="ctrl-btn"></button><button id="next-btn" class="ctrl-btn"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/></svg></button></div></div><script>const wrapper=document.getElementById('avatar-wrapper'),btn=document.getElementById('play-pause-btn'),prev=document.getElementById('prev-btn'),next=document.getElementById('next-btn'),audio=new Audio("${audioDataUrl}");const playI='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>',pauseI='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';btn.innerHTML=playI;const togglePlay=()=>{audio.paused?audio.play():audio.pause()};btn.addEventListener('click',togglePlay);wrapper.addEventListener('click',togglePlay);prev.addEventListener('click',()=>{audio.currentTime=Math.max(0,audio.currentTime-5)});next.addEventListener('click',()=>{audio.currentTime+=5});audio.addEventListener('play',()=>{btn.innerHTML=pauseI;wrapper.classList.add('speaking')});audio.addEventListener('pause',()=>{btn.innerHTML=playI;wrapper.classList.remove('speaking')});audio.addEventListener('ended',()=>{btn.innerHTML=playI;wrapper.classList.remove('speaking')});<\/script></body></html>`;
                 
                 const base64Html = btoa(unescape(encodeURIComponent(innerHtmlContent)));
-                const iframeCode = `<iframe src="data:text/html;base64,${base64Html}" style="width: ${size}px; height: ${size}px; border: none; background: transparent;" scrolling="no" allow="autoplay"></iframe>`;
+                
+                // *** НОВОЕ ИЗМЕНЕНИЕ ЗДЕСЬ ***
+                const uniqueId = Date.now(); // Создаем уникальный ID на основе текущего времени
+                const iframeCode = `<iframe data-cache-buster="${uniqueId}" src="data:text/html;base64,${base64Html}" style="width: ${size}px; height: ${size}px; border: none; background: transparent;" scrolling="no" allow="autoplay"></iframe>`;
 
                 generatedCode.value = iframeCode;
                 generatedCode.select();
