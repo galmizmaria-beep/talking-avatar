@@ -1,738 +1,408 @@
 <!DOCTYPE html>
 <html lang="ru">
-=device-width, initial-scale=1.0">
-    <title>AI Чат-Аватар Генератор</title>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Аватар (Универсальный API)</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --bg: #120C1C;
-            --surface: #1E1234;
-            --primary: #A450F3;
-            --accent: #F72585;
-            --text: #EAE2FF;
-            --border: #3A2E59;
-            --input-bg: #0b0711;
-        }
-
-        body {
-            font-family: 'Poppins', sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
-
-        #editor-container {
-            max-width: 1000px;
-            width: 100%;
-            background-color: var(--surface);
-            padding: 30px;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            border: 1px solid var(--border);
-        }
-
-        h1 {
-            text-align: center;
-            margin-bottom: 30px;
-            text-shadow: 0 0 10px var(--accent);
-        }
-
-        .editor-layout {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 30px;
-        }
-
-        .col {
-            flex: 1;
-            min-width: 320px;
-            padding: 20px;
-            background: rgba(0,0,0,0.2);
-            border-radius: 15px;
-            border: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* --- PREVIEW BOX --- */
+        :root { --bg: #120C1C; --surface: #1E1234; --primary: #A450F3; --accent: #F72585; --text: #EAE2FF; --border: #3A2E59; --input-bg: #0b0711; }
+        * { box-sizing: border-box; }
+        body { font-family: 'Poppins', sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        
+        #editor-container { max-width: 1000px; width: 100%; background-color: var(--surface); padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid var(--border); }
+        h1 { text-align: center; margin-bottom: 30px; text-shadow: 0 0 10px var(--accent); }
+        .editor-layout { display: flex; flex-wrap: wrap; gap: 30px; }
+        .col { flex: 1; min-width: 320px; display: flex; flex-direction: column; gap: 15px; }
+        
+        /* Preview */
         #preview-box {
             position: relative;
             background-image: linear-gradient(45deg, #181818 25%, transparent 25%), linear-gradient(-45deg, #181818 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #181818 75%), linear-gradient(-45deg, transparent 75%, #181818 75%);
-            background-size: 20px 20px;
-            background-color: #222;
-            border: 1px dashed #555; 
-            border-radius: 20px;
-            overflow: hidden;
-            width: 100%;
-            height: 500px; /* Высота симуляции слайда */
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            background-size: 20px 20px; background-color: #222; border: 1px dashed #555; border-radius: 20px;
+            overflow: hidden; width: 100%; height: 500px; display: flex; justify-content: center; align-items: center;
         }
-
-        /* Elements inside Preview (Styles shared with generated code) */
-        .widget-wrapper {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            position: relative;
-        }
-
-        /* Avatar Circle */
-        .avatar-ring {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            border: 3px solid var(--border);
-            background: var(--bg);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: absolute;
-            z-index: 10;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        }
-
+        
+        .widget-wrapper { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; position: relative; }
+        
+        /* Avatar UI Styles (Identical to injected code) */
+        .avatar-ring { width: 100px; height: 100px; border-radius: 50%; border: 3px solid var(--border); background: var(--bg); cursor: pointer; position: absolute; z-index: 10; display: flex; justify-content: center; align-items: center; transition: 0.3s; }
         .avatar-ring:hover { transform: scale(1.05); }
-        .avatar-ring img {
-            width: 90%;
-            height: 90%;
-            border-radius: 50%;
-            object-fit: cover;
-        }
-
-        /* Chat Window */
-        .chat-window {
-            width: 90%;
-            height: 90%;
-            background: var(--bg);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
-            opacity: 0;
-            pointer-events: none;
-            transform: scale(0.9);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            position: absolute;
-            z-index: 20;
-        }
-
-        .chat-window.open {
-            opacity: 1;
-            pointer-events: all;
-            transform: scale(1);
-        }
-
-        .chat-header {
-            padding: 15px;
-            background: var(--surface);
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
+        .avatar-ring img { width: 90%; height: 90%; border-radius: 50%; object-fit: cover; }
         
-        .header-info { display: flex; align-items: center; gap: 10px; }
-        .header-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
-        .header-name { font-weight: 600; font-size: 0.9rem; }
+        .chat-window { width: 90%; height: 90%; background: var(--bg); border: 1px solid var(--border); border-radius: 20px; display: flex; flex-direction: column; position: absolute; z-index: 20; opacity: 0; pointer-events: none; transform: scale(0.9); transition: all 0.3s; box-shadow: 0 10px 50px rgba(0,0,0,0.7); }
+        .chat-window.open { opacity: 1; pointer-events: all; transform: scale(1); }
         
-        .close-btn {
-            background: none; border: none; color: #888; cursor: pointer; font-size: 1.2rem;
-        }
-        .close-btn:hover { color: white; }
-
-        .chat-messages {
-            flex: 1;
-            padding: 15px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .message {
-            display: flex;
-            align-items: flex-end;
-            gap: 8px;
-            max-width: 80%;
-        }
+        .chat-header { padding: 15px; background: rgba(255,255,255,0.05); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .header-info { display: flex; align-items: center; gap: 10px; font-weight: 600; }
+        .header-avatar { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; }
+        .close-btn { background: none; border: none; color: #aaa; cursor: pointer; font-size: 24px; line-height: 1; }
         
-        .msg-avatar { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; flex-shrink: 0;}
+        .chat-messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        .message { display: flex; align-items: flex-end; gap: 8px; max-width: 85%; }
+        .msg-avatar { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+        .bubble { padding: 10px 14px; border-radius: 18px; font-size: 0.9rem; line-height: 1.4; word-wrap: break-word; }
         
-        .bubble {
-            padding: 10px 14px;
-            border-radius: 18px;
-            font-size: 0.9rem;
-            line-height: 1.4;
-            word-wrap: break-word;
-        }
-
         .msg-bot { align-self: flex-start; }
-        .msg-bot .bubble {
-            background: var(--surface);
-            border-bottom-left-radius: 4px;
-            border: 1px solid var(--border);
-        }
-
+        .msg-bot .bubble { background: rgba(255,255,255,0.1); border-bottom-left-radius: 2px; }
         .msg-user { align-self: flex-end; flex-direction: row-reverse; }
-        .msg-user .bubble {
-            background: linear-gradient(135deg, var(--primary), var(--accent));
-            color: white;
-            border-bottom-right-radius: 4px;
-        }
-
-        .chat-input-area {
-            padding: 15px;
-            background: var(--surface);
-            border-top: 1px solid var(--border);
-            display: flex;
-            gap: 10px;
-        }
-
-        .chat-input {
-            flex: 1;
-            background: var(--input-bg);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            padding: 10px 15px;
-            color: white;
-            outline: none;
-            font-family: inherit;
-        }
-
-        .send-btn {
-            background: var(--accent);
-            border: none;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: 0.2s;
-        }
-        .send-btn svg { width: 20px; fill: white; margin-left: 2px; }
+        .msg-user .bubble { background: var(--accent); color: white; border-bottom-right-radius: 2px; }
+        
+        .chat-input-area { padding: 15px; background: rgba(0,0,0,0.2); border-top: 1px solid var(--border); display: flex; gap: 10px; }
+        .chat-input { flex: 1; background: var(--input-bg); border: 1px solid var(--border); border-radius: 20px; padding: 10px 15px; color: white; outline: none; }
+        .send-btn { background: var(--accent); border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; display: flex; justify-content: center; align-items: center; transition: 0.2s; }
         .send-btn:hover { transform: scale(1.1); }
+        .send-btn svg { width: 18px; fill: white; margin-left: 2px; }
 
-        /* --- SETTINGS --- */
-        .custom-file {
-            display: block;
-            padding: 12px;
-            background: var(--bg);
-            border: 1px dashed var(--border);
-            text-align: center;
-            cursor: pointer;
-            margin-bottom: 15px;
-            border-radius: 8px;
-            width: 100%;
-            box-sizing: border-box;
-            position: relative;
-        }
-        .custom-file:hover { border-color: var(--primary); }
-        .file-input { position: absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;}
+        /* Settings */
+        .custom-file { padding: 12px; background: rgba(0,0,0,0.2); border: 1px dashed var(--border); text-align: center; cursor: pointer; border-radius: 8px; position: relative; }
+        .file-input { position: absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; }
         
-        .label-text { display: block; margin: 15px 0 5px; font-weight: 600; font-size: 0.9em; }
-        
-        select, input[type="text"], input[type="url"] {
-            width: 100%;
-            padding: 10px;
-            background: var(--input-bg);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            color: white;
-            box-sizing: border-box;
-            font-family: inherit;
-        }
-
+        input[type="text"], input[type="url"], select { width: 100%; padding: 10px; background: var(--input-bg); border: 1px solid var(--border); border-radius: 8px; color: white; }
         input[type="color"] { width: 100%; height: 40px; border: none; background: none; cursor: pointer; }
-        input[type="range"] { width: 100%; accent-color: var(--primary); }
-
-        .btn {
-            width: 100%;
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            background: linear-gradient(90deg, #A450F3, #F72585);
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-            margin-top: 20px;
-        }
-        .btn:hover { filter: brightness(1.2); }
-
-        textarea {
-            width: 100%; height: 80px; background: #0b0711;
-            border: 1px solid var(--border); color: #888;
-            margin-top: 15px; border-radius: 8px; padding: 10px;
-            font-family: monospace; font-size: 11px; resize: none;
-        }
-
-        .note { font-size: 0.75rem; color: #888; margin-top: 5px; line-height: 1.3; }
+        
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; background: linear-gradient(90deg, #A450F3, #F72585); color: white; font-weight: 600; cursor: pointer; margin-top: 10px; }
+        textarea { width: 100%; height: 100px; background: #0b0711; border: 1px solid var(--border); color: #888; border-radius: 8px; padding: 10px; resize: none; }
+        .hint { font-size: 0.8rem; color: #aaa; margin-top: -10px; line-height: 1.4; }
     </style>
 </head>
 <body>
 
 <div id="editor-container">
-    <h1>🤖 Конструктор Чат-Бота</h1>
-
+    <h1>🤖 Конструктор Умного Аватара</h1>
     <div class="editor-layout">
         <!-- Preview -->
         <div class="col" style="flex: 1.5;">
-            <h3 style="text-align:center">Предпросмотр</h3>
             <div id="preview-box">
                 <div class="widget-wrapper">
-                    <!-- State 1: Avatar Ring -->
-                    <div class="avatar-ring" id="prev-ring" onclick="togglePreviewChat()">
-                        <img id="prev-avatar-img" src="">
+                    <!-- Ring -->
+                    <div class="avatar-ring" id="prev-ring" onclick="toggleChat()">
+                        <img id="prev-img-ring" src="">
                     </div>
-
-                    <!-- State 2: Chat Window -->
+                    <!-- Chat -->
                     <div class="chat-window" id="prev-chat">
                         <div class="chat-header">
                             <div class="header-info">
-                                <img id="prev-header-img" class="header-avatar" src="">
-                                <span class="header-name">AI Tutor</span>
+                                <img id="prev-img-head" class="header-avatar" src="">
+                                <span id="prev-name">Avatar</span>
                             </div>
-                            <button class="close-btn" onclick="togglePreviewChat()">×</button>
+                            <button class="close-btn" onclick="toggleChat()">×</button>
                         </div>
-                        <div class="chat-messages" id="prev-messages">
-                            <!-- Messages go here -->
-                        </div>
+                        <div class="chat-messages" id="prev-msgs"></div>
                         <div class="chat-input-area">
-                            <input type="text" class="chat-input" id="prev-input" placeholder="Введите сообщение...">
-                            <button class="send-btn">
-                                <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-                            </button>
+                            <input type="text" class="chat-input" id="prev-in" placeholder="Введите сообщение...">
+                            <button class="send-btn" onclick="simSend()"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
                         </div>
                     </div>
                 </div>
             </div>
-            <p style="font-size:0.8rem; color:#888; text-align:center; margin-top:10px">
-                Нажмите на круг аватара, чтобы открыть чат.
-            </p>
+            <p style="text-align:center; color:#888; font-size:0.9rem; margin-top:5px;">Нажмите на круг, чтобы проверить анимацию.</p>
         </div>
 
         <!-- Settings -->
         <div class="col">
-            <h3 style="text-align:center">Настройки</h3>
-
             <label class="custom-file">
-                <span id="img-name">📂 Загрузить Фото Аватара</span>
+                <span id="label-img">📂 Загрузить Аватар</span>
                 <input type="file" id="inp-img" accept="image/*" class="file-input">
             </label>
 
-            <span class="label-text">Язык интерфейса:</span>
+            <span style="font-weight:600">Ссылка на Webhook (Make/n8n/API):</span>
+            <input type="url" id="inp-api" placeholder="https://hook.eu1.make.com/...">
+            <div class="hint">
+                Вставьте сюда ссылку Webhook. Бот отправит JSON: <code>{"message": "вопрос"}</code>. 
+                Webhook должен вернуть JSON: <code>{"answer": "ответ"}</code> или просто текст.
+            </div>
+
+            <span style="font-weight:600">Язык / Подсказка:</span>
             <select id="inp-lang">
                 <option value="ru">Русский</option>
                 <option value="en">English</option>
             </select>
 
-            <span class="label-text">Приветственное сообщение:</span>
-            <input type="text" id="inp-welcome" value="Привет! Я готов ответить на твои вопросы.">
+            <span style="font-weight:600">Приветствие:</span>
+            <input type="text" id="inp-welcome" value="Привет! Спрашивай что угодно.">
 
-            <span class="label-text">Ссылка на источник ответов (Webhook/API):</span>
-            <input type="url" id="inp-api" placeholder="https://hook.eu1.make.com/...">
-            <div class="note">Если поле пустое, бот будет работать в демо-режиме (эхо).<br>Подключите Webhook (Make/n8n/Zapier) для реального ИИ. Бот отправляет JSON: <code>{ "question": "..." }</code></div>
-
-            <span class="label-text">Цвет Ацента (Сообщения/Кнопки):</span>
+            <span style="font-weight:600">Цвет сообщений:</span>
             <input type="color" id="inp-accent" value="#F72585">
             
-            <span class="label-text">Цвет Фона Чата:</span>
-            <input type="color" id="inp-bg" value="#120C1C">
-
             <button id="btn-copy" class="btn">Скопировать код</button>
-            <textarea id="output-code" readonly placeholder="Код появится здесь..."></textarea>
+            <textarea id="output-code" readonly placeholder="Здесь появится готовый код..."></textarea>
         </div>
     </div>
 </div>
 
 <script>
-    // Default Robot Icon
-    const robotIcon = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23cccccc'%3E%3Cpath d='M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2'/%3E%3C/svg%3E";
-    
-    // User Icon (Generic person)
-    const userIcon = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23888888'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E";
+    // Default Assets
+    const defBot = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23cccccc'%3E%3Cpath d='M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2'/%3E%3C/svg%3E";
+    const defUser = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23888888'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E";
 
+    // UI Elements
     const els = {
-        imgInp: document.getElementById('inp-img'),
-        prevRingImg: document.getElementById('prev-avatar-img'),
-        prevHeaderImg: document.getElementById('prev-header-img'),
-        imgName: document.getElementById('img-name'),
-        
-        chatWindow: document.getElementById('prev-chat'),
-        msgContainer: document.getElementById('prev-messages'),
-        
-        lang: document.getElementById('inp-lang'),
-        welcome: document.getElementById('inp-welcome'),
+        imgRing: document.getElementById('prev-img-ring'),
+        imgHead: document.getElementById('prev-img-head'),
+        chatWin: document.getElementById('prev-chat'),
+        msgs: document.getElementById('prev-msgs'),
+        inp: document.getElementById('prev-in'),
+        // Inputs
+        file: document.getElementById('inp-img'),
         api: document.getElementById('inp-api'),
-        accent: document.getElementById('inp-accent'),
-        bg: document.getElementById('inp-bg'),
-        
-        copyBtn: document.getElementById('btn-copy'),
-        codeArea: document.getElementById('output-code')
+        lang: document.getElementById('inp-lang'),
+        wel: document.getElementById('inp-welcome'),
+        acc: document.getElementById('inp-accent'),
+        code: document.getElementById('output-code'),
+        copy: document.getElementById('btn-copy'),
+        label: document.getElementById('label-img')
     };
 
-    let state = {
-        avatar: robotIcon, // Default robot
-        isUserUploaded: false
-    };
+    let state = { avatar: defBot, isUser: false, open: false };
 
-    // Load Image
-    els.imgInp.onchange = e => {
-        const file = e.target.files[0];
-        if(!file) return;
-        const reader = new FileReader();
-        reader.onload = ev => {
-            state.avatar = ev.target.result;
-            state.isUserUploaded = true;
-            els.prevRingImg.src = state.avatar;
-            els.prevHeaderImg.src = state.avatar;
-            els.imgName.innerText = "✅ Фото загружено";
-            resetChat();
-        };
-        reader.readAsDataURL(file);
-    };
+    // Init
+    els.imgRing.src = state.avatar;
+    els.imgHead.src = state.avatar;
 
-    // Initialize Preview
-    els.prevRingImg.src = state.avatar;
-    els.prevHeaderImg.src = state.avatar;
-
-    // Toggle Preview Logic
-    let isChatOpen = false;
-    window.togglePreviewChat = () => {
-        isChatOpen = !isChatOpen;
-        if(isChatOpen) {
-            els.chatWindow.classList.add('open');
-            // Add welcome message if empty
-            if(els.msgContainer.children.length === 0) {
-                addMessage('bot', els.welcome.value);
-            }
-        } else {
-            els.chatWindow.classList.remove('open');
+    // Handlers
+    els.file.onchange = e => {
+        const f = e.target.files[0];
+        if(f) {
+            const r = new FileReader();
+            r.onload = v => {
+                state.avatar = v.target.result;
+                state.isUser = true;
+                els.imgRing.src = state.avatar;
+                els.imgHead.src = state.avatar;
+                els.label.innerText = "✅ Фото готово";
+                refreshChat();
+            };
+            r.readAsDataURL(f);
         }
     };
 
-    function addMessage(sender, text) {
+    window.toggleChat = () => {
+        state.open = !state.open;
+        if(state.open) {
+            els.chatWin.classList.add('open');
+            if(els.msgs.children.length === 0) addMsg('bot', els.wel.value);
+        } else {
+            els.chatWin.classList.remove('open');
+        }
+    };
+
+    function addMsg(role, text) {
         const div = document.createElement('div');
-        div.className = `message msg-${sender}`;
+        div.className = `message msg-${role}`;
         
         const img = document.createElement('img');
         img.className = 'msg-avatar';
-        img.src = sender === 'bot' ? state.avatar : userIcon;
+        img.src = role === 'bot' ? state.avatar : defUser;
         
-        const bubble = document.createElement('div');
-        bubble.className = 'bubble';
-        bubble.innerText = text;
+        const bub = document.createElement('div');
+        bub.className = 'bubble';
+        if(role === 'user') bub.style.background = els.acc.value;
+        bub.innerText = text;
 
-        if(sender === 'bot') {
-            div.appendChild(img);
-            div.appendChild(bubble);
-        } else {
-            div.appendChild(img);
-            div.appendChild(bubble);
-        }
+        div.appendChild(img);
+        div.appendChild(bub);
         
-        els.msgContainer.appendChild(div);
-        els.msgContainer.scrollTop = els.msgContainer.scrollHeight;
+        // Order fix for flex reverse
+        if(role === 'user') { div.insertBefore(bub, img); }
+        
+        els.msgs.appendChild(div);
+        els.msgs.scrollTop = els.msgs.scrollHeight;
     }
 
-    function resetChat() {
-        els.msgContainer.innerHTML = '';
-        if(isChatOpen) addMessage('bot', els.welcome.value);
+    function refreshChat() {
+        els.msgs.innerHTML = '';
+        if(state.open) addMsg('bot', els.wel.value);
     }
 
-    // Live Settings Updates
-    els.accent.oninput = () => {
-        document.querySelector('.send-btn').style.background = els.accent.value;
-        const userBubbles = document.querySelectorAll('.msg-user .bubble');
-        userBubbles.forEach(b => b.style.background = els.accent.value); // simplified
+    window.simSend = () => {
+        const val = els.inp.value;
+        if(!val) return;
+        addMsg('user', val);
+        els.inp.value = '';
+        setTimeout(() => addMsg('bot', "Это предпросмотр. В реальном виджете здесь будет ответ от вашей Webhook ссылки."), 600);
     };
-    els.bg.oninput = () => {
-        els.chatWindow.style.background = els.bg.value;
+
+    // Live update
+    els.acc.oninput = () => {
+        document.querySelector('.send-btn').style.background = els.acc.value;
+        refreshChat();
     };
-    els.welcome.oninput = resetChat;
+    els.wel.oninput = refreshChat;
 
     // Generate Code
-    els.copyBtn.onclick = () => {
-        const code = generateFinalCode();
-        els.codeArea.value = code;
-        els.codeArea.select();
+    els.copy.onclick = () => {
+        const code = getCode();
+        els.code.value = code;
+        els.code.select();
         document.execCommand('copy');
-        els.copyBtn.innerText = "Скопировано!";
-        setTimeout(() => els.copyBtn.innerText = "Скопировать код", 2000);
+        els.copy.innerText = "✅ Скопировано!";
+        setTimeout(() => els.copy.innerText = "Скопировать код", 2000);
     };
 
-    const generateFinalCode = () => {
-        const uid = "chat-" + Math.random().toString(36).substr(2, 6);
-        const avatarSrc = state.isUserUploaded ? state.avatar : robotIcon;
-        const userSrc = userIcon;
+    function getCode() {
+        const uid = "ai-" + Math.random().toString(36).substr(2,6);
+        const av = state.isUser ? state.avatar : defBot;
+        const us = defUser;
+        const api = els.api.value;
+        const col = els.acc.value;
+        const wel = els.wel.value;
+        const lan = els.lang.value;
         
-        const accent = els.accent.value;
-        const bg = els.bg.value;
-        const welcomeTxt = els.welcome.value;
-        const lang = els.lang.value;
-        const apiUrl = els.api.value;
-
-        const placeholders = {
-            ru: { placeholder: "Введите сообщение...", error: "Ошибка соединения", send: "Отпр." },
-            en: { placeholder: "Type a message...", error: "Connection error", send: "Send" }
-        };
-        const txt = placeholders[lang];
+        const txt = lan === 'ru' 
+            ? { ph: "Сообщение...", err: "Ошибка связи с сервером. Проверьте Webhook." }
+            : { ph: "Type message...", err: "Connection error. Check Webhook." };
 
         return `
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"></head>
-<body style="margin:0;padding:0;width:100%;height:100%;background:transparent;overflow:hidden;">
+<body style="margin:0;padding:0;width:100%;height:100%;background:transparent;overflow:hidden;font-family:sans-serif;">
 <style>
-    * { box-sizing: border-box; font-family: sans-serif; }
-    html, body { width: 100%; height: 100%; }
-    
-    #${uid} {
-        width: 100%; height: 100%;
-        display: flex; justify-content: center; align-items: center;
-        position: relative;
-    }
+* { box-sizing: border-box; }
+#${uid} { width:100%; height:100%; display:flex; justify-content:center; align-items:center; position:relative; }
 
-    /* Avatar Ring State */
-    #${uid} .ring {
-        width: 100px; height: 100px;
-        border-radius: 50%;
-        background: ${bg};
-        border: 3px solid rgba(255,255,255,0.2);
-        cursor: pointer;
-        display: flex; justify-content: center; align-items: center;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-        transition: transform 0.3s;
-        z-index: 1;
-    }
-    #${uid} .ring:hover { transform: scale(1.05); }
-    #${uid} .ring img { width: 90%; height: 90%; border-radius: 50%; object-fit: cover; }
+/* Ring */
+#${uid} .ring { width:90px; height:90px; border-radius:50%; background:#1E1234; border:3px solid rgba(255,255,255,0.3); cursor:pointer; display:flex; justify-content:center; align-items:center; box-shadow:0 5px 15px rgba(0,0,0,0.4); transition:0.3s; z-index:1; }
+#${uid} .ring:hover { transform:scale(1.05); }
+#${uid} .ring img { width:90%; height:90%; border-radius:50%; object-fit:cover; }
 
-    /* Chat Window State */
-    #${uid} .window {
-        position: absolute;
-        width: 95%; height: 95%;
-        background: ${bg};
-        border-radius: 15px;
-        border: 1px solid rgba(255,255,255,0.1);
-        display: flex; flex-direction: column;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        opacity: 0; pointer-events: none; transform: scale(0.9);
-        transition: all 0.3s ease;
-        z-index: 2;
-        color: #fff;
-    }
-    #${uid} .window.active { opacity: 1; pointer-events: all; transform: scale(1); }
+/* Chat */
+#${uid} .win { position:absolute; width:98%; height:98%; background:#120C1C; border-radius:15px; border:1px solid #3A2E59; display:flex; flex-direction:column; box-shadow:0 10px 30px rgba(0,0,0,0.6); opacity:0; pointer-events:none; transform:scale(0.9); transition:0.3s; z-index:2; color:#fff; }
+#${uid} .win.show { opacity:1; pointer-events:all; transform:scale(1); }
 
-    #${uid} .header {
-        padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.1);
-        display: flex; justify-content: space-between; align-items: center;
-        background: rgba(0,0,0,0.2);
-    }
-    #${uid} .h-info { display: flex; align-items: center; gap: 8px; font-weight: bold; font-size: 0.9em; }
-    #${uid} .h-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
-    #${uid} .close { background:none; border:none; color:#aaa; font-size: 1.5em; cursor:pointer; padding:0 5px;}
+#${uid} .head { padding:10px; background:rgba(255,255,255,0.05); border-bottom:1px solid #3A2E59; display:flex; justify-content:space-between; align-items:center; }
+#${uid} .prof { display:flex; align-items:center; gap:8px; font-size:14px; font-weight:bold; }
+#${uid} .prof img { width:30px; height:30px; border-radius:50%; object-fit:cover; }
+#${uid} .cls { background:none; border:none; color:#888; font-size:20px; cursor:pointer; }
 
-    #${uid} .msgs {
-        flex: 1; padding: 15px; overflow-y: auto;
-        display: flex; flex-direction: column; gap: 12px;
-        scrollbar-width: thin; scrollbar-color: ${accent} transparent;
-    }
-    
-    #${uid} .m-row { display: flex; gap: 8px; max-width: 85%; align-items: flex-end; }
-    #${uid} .m-bot { align-self: flex-start; }
-    #${uid} .m-user { align-self: flex-end; flex-direction: row-reverse; }
-    
-    #${uid} .m-av { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
-    
-    #${uid} .bub {
-        padding: 8px 12px; border-radius: 15px; font-size: 0.9em; line-height: 1.4;
-    }
-    #${uid} .m-bot .bub { background: rgba(255,255,255,0.1); border-bottom-left-radius: 2px; }
-    #${uid} .m-user .bub { background: ${accent}; color: white; border-bottom-right-radius: 2px; }
+#${uid} .logs { flex:1; padding:10px; overflow-y:auto; display:flex; flex-direction:column; gap:10px; scrollbar-width:thin; }
+#${uid} .row { display:flex; gap:6px; max-width:90%; align-items:flex-end; font-size:13px; line-height:1.4; }
+#${uid} .bot { align-self:flex-start; }
+#${uid} .usr { align-self:flex-end; flex-direction:row-reverse; }
+#${uid} .av { width:24px; height:24px; border-radius:50%; object-fit:cover; flex-shrink:0; }
+#${uid} .txt { padding:8px 12px; border-radius:15px; word-wrap:break-word; }
+#${uid} .bot .txt { background:rgba(255,255,255,0.1); border-bottom-left-radius:2px; }
+#${uid} .usr .txt { background:${col}; color:#fff; border-bottom-right-radius:2px; }
 
-    #${uid} .input-area {
-        padding: 10px; border-top: 1px solid rgba(255,255,255,0.1);
-        display: flex; gap: 8px; background: rgba(0,0,0,0.1);
-    }
-    #${uid} input {
-        flex: 1; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1);
-        border-radius: 20px; padding: 8px 12px; color: white; outline: none;
-    }
-    #${uid} button.send {
-        background: ${accent}; border: none; width: 36px; height: 36px;
-        border-radius: 50%; cursor: pointer; display: flex; justify-content: center; align-items: center;
-    }
-    #${uid} button.send svg { width: 18px; fill: white; margin-left: 2px; }
-    
-    /* Typing indicator */
-    .typing { display: flex; gap: 3px; padding: 10px !important; }
-    .dot { width: 6px; height: 6px; background: #bbb; border-radius: 50%; animation: jump 1.5s infinite; }
-    .dot:nth-child(2) { animation-delay: 0.2s; }
-    .dot:nth-child(3) { animation-delay: 0.4s; }
-    @keyframes jump { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-5px);} }
+#${uid} .inp { padding:8px; background:rgba(0,0,0,0.2); border-top:1px solid #3A2E59; display:flex; gap:6px; }
+#${uid} input { flex:1; background:#0b0711; border:1px solid #3A2E59; border-radius:20px; padding:8px 12px; color:#fff; outline:none; }
+#${uid} .snd { width:34px; height:34px; border-radius:50%; background:${col}; border:none; color:#fff; cursor:pointer; display:flex; justify-content:center; align-items:center; }
+#${uid} .snd svg { width:16px; fill:white; margin-left:2px; }
 
+/* Loader */
+.dots { display:flex; gap:3px; padding:5px 8px !important; }
+.d { width:5px; height:5px; background:#aaa; border-radius:50%; animation:b 1.4s infinite; }
+.d:nth-child(2){animation-delay:0.2s} .d:nth-child(3){animation-delay:0.4s}
+@keyframes b {0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
 </style>
 
 <div id="${uid}">
-    <!-- Start State -->
-    <div class="ring" id="ring-${uid}">
-        <img src="${avatarSrc}">
-    </div>
-
-    <!-- Chat State -->
-    <div class="window" id="win-${uid}">
-        <div class="header">
-            <div class="h-info">
-                <img class="h-avatar" src="${avatarSrc}">
-                <span>Avatar</span>
-            </div>
-            <button class="close" id="close-${uid}">×</button>
+    <div class="ring" id="r-${uid}"><img src="${av}"></div>
+    <div class="win" id="w-${uid}">
+        <div class="head">
+            <div class="prof"><img src="${av}"><span>AI Assistant</span></div>
+            <button class="cls" id="c-${uid}">×</button>
         </div>
-        
-        <div class="msgs" id="msgs-${uid}"></div>
-        
-        <div class="input-area">
-            <input type="text" id="in-${uid}" placeholder="${txt.placeholder}">
-            <button class="send" id="send-${uid}">
-                <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-            </button>
+        <div class="logs" id="l-${uid}"></div>
+        <div class="inp">
+            <input type="text" id="i-${uid}" placeholder="${txt.ph}">
+            <button class="snd" id="s-${uid}"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
         </div>
     </div>
 </div>
 
 <script>
 (function(){
-    var ring = document.getElementById('ring-${uid}');
-    var win = document.getElementById('win-${uid}');
-    var close = document.getElementById('close-${uid}');
-    var msgs = document.getElementById('msgs-${uid}');
-    var input = document.getElementById('in-${uid}');
-    var sendBtn = document.getElementById('send-${uid}');
-    
-    var avatarImg = "${avatarSrc}";
-    var userImg = "${userSrc}";
-    var apiUrl = "${apiUrl}";
-    
-    var hasOpened = false;
+    var r = document.getElementById('r-${uid}');
+    var w = document.getElementById('w-${uid}');
+    var c = document.getElementById('c-${uid}');
+    var l = document.getElementById('l-${uid}');
+    var i = document.getElementById('i-${uid}');
+    var s = document.getElementById('s-${uid}');
+    var api = "${api}";
+    var start = false;
 
-    // Toggle Window
-    ring.onclick = function() {
-        win.classList.add('active');
-        ring.style.opacity = '0';
-        ring.style.pointerEvents = 'none';
-        if(!hasOpened) {
-            addMsg('bot', "${welcomeTxt}");
-            hasOpened = true;
-        }
-    };
-    
-    close.onclick = function() {
-        win.classList.remove('active');
-        ring.style.opacity = '1';
-        ring.style.pointerEvents = 'all';
-    };
+    // Open/Close
+    r.onclick = function(){ w.classList.add('show'); r.style.opacity='0'; r.style.pointerEvents='none'; if(!start){ add('bot',"${wel}"); start=true; } };
+    c.onclick = function(){ w.classList.remove('show'); r.style.opacity='1'; r.style.pointerEvents='all'; };
 
-    function addMsg(role, text, isTyping) {
-        var row = document.createElement('div');
-        row.className = 'm-row m-' + role;
-        
-        var img = document.createElement('img');
-        img.className = 'm-av';
-        img.src = role === 'bot' ? avatarImg : userImg;
-        
-        var bub = document.createElement('div');
-        bub.className = 'bub';
-        
-        if(isTyping) {
-            bub.classList.add('typing');
-            bub.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
-        } else {
-            bub.innerText = text;
-        }
-
-        if(role === 'bot') { row.appendChild(img); row.appendChild(bub); }
-        else { row.appendChild(img); row.appendChild(bub); }
-        
-        msgs.appendChild(row);
-        msgs.scrollTop = msgs.scrollHeight;
-        return row; // return ref to remove typing later
+    function add(who, msg, load) {
+        var d = document.createElement('div'); d.className = 'row ' + who;
+        var im = document.createElement('img'); im.className = 'av'; im.src = who==='bot'?"${av}":"${us}";
+        var t = document.createElement('div'); t.className = 'txt';
+        if(load) { t.className += ' dots'; t.innerHTML = '<div class="d"></div><div class="d"></div><div class="d"></div>'; }
+        else { t.innerText = msg; }
+        d.appendChild(im); d.appendChild(t);
+        l.appendChild(d); l.scrollTop = l.scrollHeight;
+        return d;
     }
 
-    async function handleSend() {
-        var txt = input.value.trim();
-        if(!txt) return;
-        
-        // 1. Show User Message
-        addMsg('user', txt);
-        input.value = '';
-        
-        // 2. Show Typing Indicator
-        var typingRow = addMsg('bot', '', true);
-        
-        // 3. Logic: API or Demo
-        var answer = "";
-        
-        if(apiUrl) {
+    async function send() {
+        var v = i.value.trim();
+        if(!v) return;
+        add('usr', v);
+        i.value = '';
+        var load = add('bot', '', true);
+
+        if(!api) {
+            setTimeout(function(){ l.removeChild(load); add('bot', "Демо режим. Вставьте ссылку API в редакторе!"); }, 1000);
+            return;
+        }
+
+        try {
+            // UNIVERSAL FETCH ATTEMPT
+            var res = await fetch(api, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: v, question: v, text: v }) // Send keys for everyone
+            });
+
+            if(!res.ok) throw new Error(res.status);
+
+            var data = await res.text();
+            var ans = "";
+
+            // Try parsing JSON
             try {
-                // Sending JSON POST
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ question: txt, lang: "${lang}" })
-                });
-                if(response.ok) {
-                    const data = await response.text(); 
-                    // Assuming API returns raw text or JSON. Let's try to parse if JSON
-                    try {
-                        const json = JSON.parse(data);
-                        answer = json.answer || json.reply || json.text || JSON.stringify(json);
-                    } catch(e) {
-                        answer = data; // Plain text
-                    }
-                } else {
-                    answer = "Error: " + response.status;
+                var json = JSON.parse(data);
+                // Smart search for answer field
+                ans = json.answer || json.reply || json.output || json.text || json.content || json.message;
+                // If not found standard keys, look for first string value
+                if(!ans) {
+                     var vals = Object.values(json);
+                     for(var k=0; k<vals.length; k++) if(typeof vals[k] === 'string') { ans = vals[k]; break; }
                 }
+                if(!ans) ans = JSON.stringify(json);
             } catch(e) {
-                answer = "${txt.error}";
+                ans = data; // Pure text response
             }
-        } else {
-            // DEMO MODE
-            await new Promise(r => setTimeout(r, 1000));
-            var demos = ${lang === 'ru' 
-                ? '["Это демо-ответ. Подключи API!", "Интересный вопрос, но я всего лишь код.", "Я робот, бип-буп."]' 
-                : '["This is a demo answer.", "Connect an API to make me smart.", "I am just a robot icon."]'};
-            answer = demos[Math.floor(Math.random() * demos.length)];
-        }
 
-        // 4. Remove typing and show answer
-        msgs.removeChild(typingRow);
-        addMsg('bot', answer);
+            l.removeChild(load);
+            add('bot', ans);
+
+        } catch(err) {
+            l.removeChild(load);
+            console.error(err);
+            add('bot', "${txt.err} (" + err.message + ")");
+        }
     }
 
-    sendBtn.onclick = handleSend;
-    input.onkeypress = function(e) { if(e.key === 'Enter') handleSend(); };
-
+    s.onclick = send;
+    i.onkeypress = function(e){ if(e.key==='Enter') send(); };
 })();
 <\/script>
 </body>
-</html>
-        `;
-    };
+</html>`;
+    }
 </script>
 </body>
 </html>
+     
+            
+            
+        
+        
+                        
+           
+       
