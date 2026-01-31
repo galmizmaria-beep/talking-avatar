@@ -384,14 +384,13 @@
         const bordColor = els.borderColor.value;
         const bgColor = els.bgColor.value;
         
+        // Для превью используем пиксели (так удобнее визуализировать в редакторе)
         const pxSize = (sizeVal / 100) * 350; 
-        
         els.prevRing.style.width = pxSize + 'px';
         els.prevRing.style.height = pxSize + 'px';
 
         const boxWidth = pxSize + 50; 
         const boxHeight = pxSize + 130; 
-        
         els.prevBox.style.width = boxWidth + 'px';
         els.prevBox.style.height = boxHeight + 'px';
 
@@ -438,24 +437,25 @@
         const bordColor = els.borderColor.value;
         const bgColor = els.bgColor.value;
         
-        // Математика размеров (такая же как в Preview)
-        // 350 - это базовый коэффициент из предпросмотра
-        const pxSize = (sizeVal / 100) * 350; 
-        const boxWidth = pxSize + 50; 
-        const boxHeight = pxSize + 130;
-        
         const uid = "gen-" + Math.random().toString(36).substr(2, 6);
 
+        // ИСПРАВЛЕНИЕ: Вместо фиксированных пикселей (px) используем 100% ширины и высоты
+        // А размер кольца задаем в vmin (процент от минимальной стороны рамки)
         return `
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"></head>
-<body style="margin:0;padding:0;overflow:hidden;width:100vw;height:100vh;display:flex;justify-content:center;align-items:center;background:transparent;">
+<body style="margin:0;padding:0;overflow:hidden;width:100%;height:100%;background:transparent;">
 <style>
+    html, body {
+        width: 100%;
+        height: 100%;
+    }
+    
     #${uid} {
-        /* Применяем те же вычисленные размеры, что и в превью */
-        width: ${boxWidth}px;
-        height: ${boxHeight}px;
+        /* ТЕПЕРЬ ОН РАСТЯГИВАЕТСЯ НА ВЕСЬ КОНТЕЙНЕР */
+        width: 100%;
+        height: 100%;
         
         display: flex;
         flex-direction: column;
@@ -471,9 +471,12 @@
     
     #${uid} .ring {
         position: relative;
-        /* Размер кольца тоже фиксируем в пикселях, как в превью */
-        width: ${pxSize}px; 
-        height: ${pxSize}px;
+        /* Размер зависит от размера рамки, которую вы тянете в Genially */
+        width: ${sizeVal}vmin; 
+        height: ${sizeVal}vmin;
+        /* Максимальные ограничения на случай огромных экранов */
+        max-width: 80vmin;
+        max-height: 80vmin;
         
         border-radius: 50%;
         border: 2px solid rgba(255,255,255,0.15);
@@ -483,6 +486,7 @@
         transition: all 0.4s ease;
         margin-bottom: 20px;
         cursor: pointer;
+        flex-shrink: 0;
     }
     
     #${uid} .ring.playing {
@@ -506,6 +510,7 @@
         gap: 25px;
         width: 100%;
         z-index: 2;
+        flex-shrink: 0;
     }
 
     #${uid} button {
@@ -624,3 +629,4 @@
 </script>
 </body>
 </html>
+            
