@@ -65,11 +65,12 @@
             justify-content: center;
             align-items: center;
             position: relative;
-            /* Фон превью такой же, как будет в итоге */
+            /* Фон превью */
             background-color: #120C1C; 
-            border: 1px solid #3A2E59;
+            border: 1px solid #3A2E59; /* Исходный цвет рамки */
             border-radius: 20px;
             overflow: hidden;
+            transition: border-color 0.3s;
         }
 
         .preview-content {
@@ -191,6 +192,16 @@
             accent-color: #888;
             cursor: pointer;
         }
+        
+        /* Стили цветов */
+        input[type=color] {
+            width: 100%;
+            height: 40px; 
+            border: none; 
+            background: none; 
+            cursor: pointer;
+            border-radius: 4px;
+        }
 
         /* Buttons */
         .actions {
@@ -281,10 +292,13 @@
             <input type="range" id="rng-size" min="30" max="85" value="65" style="width:100%">
 
             <span class="label-text">Цвет свечения:</span>
-            <input type="color" id="inp-color" value="#F72585" style="width:100%; height:40px; border:none; background:none; cursor:pointer;">
+            <input type="color" id="inp-color" value="#F72585">
 
             <span class="label-text">Интенсивность свечения:</span>
             <input type="range" id="rng-glow" min="10" max="50" value="20" style="width:100%">
+
+            <span class="label-text">Цвет рамки виджета:</span>
+            <input type="color" id="inp-border-color" value="#3A2E59">
         </div>
     </div>
 
@@ -304,9 +318,11 @@
         prevImg: document.getElementById('prev-img'),
         prevPlace: document.getElementById('prev-placeholder'),
         prevRing: document.getElementById('prev-ring'),
+        prevBox: document.getElementById('preview-box'), // Сам ящик предпросмотра
         audio: document.getElementById('main-audio'),
         btnPlay: document.getElementById('prev-b-play'),
         color: document.getElementById('inp-color'),
+        borderColor: document.getElementById('inp-border-color'), // Цвет рамки
         glow: document.getElementById('rng-glow'),
         size: document.getElementById('rng-size'),
         outCode: document.getElementById('output-code'),
@@ -347,15 +363,19 @@
         const color = els.color.value;
         const glowSize = els.glow.value;
         const sizeVal = els.size.value;
+        const bordColor = els.borderColor.value;
         
-        // Масштабируем размер кольца в превью (примерно от 120px до 320px)
+        // 1. Обновляем размер кольца в превью (масштабирование для визуализации)
         const pxSize = (sizeVal / 100) * 350; 
         els.prevRing.style.width = pxSize + 'px';
         els.prevRing.style.height = pxSize + 'px';
 
-        // Показываем свечение в редакторе всегда
+        // 2. Обновляем свечение (видно всегда в редакторе)
         els.prevRing.style.boxShadow = `0 0 ${glowSize}px ${color}, inset 0 0 ${glowSize/2}px ${color}`;
         els.prevRing.style.borderColor = color;
+
+        // 3. Обновляем цвет рамки контейнера предпросмотра
+        els.prevBox.style.borderColor = bordColor;
     };
 
     // Play/Pause logic for Preview
@@ -380,7 +400,7 @@
     };
 
     // Listeners
-    [els.color, els.glow, els.size].forEach(el => el.oninput = updatePreview);
+    [els.color, els.glow, els.size, els.borderColor].forEach(el => el.oninput = updatePreview);
     updatePreview();
 
     // --- HTML GENERATOR ---
@@ -393,18 +413,19 @@
         const color = els.color.value;
         const glowSize = els.glow.value;
         const sizeVal = els.size.value;
+        const bordColor = els.borderColor.value;
         
         const uid = "gen-" + Math.random().toString(36).substr(2, 6);
 
-        // Мы добавляем стили для body/container, чтобы это выглядело как карточка на референсе
-        // Background: #120C1C, Border: #3A2E59, Radius: 20px
+        // Мы добавляем стили для body/container, чтобы это выглядело как карточка
+        // Background: #120C1C (фиксированный), Border: меняется пользователем
         return `
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"></head>
 <body style="margin:0;padding:0;overflow:hidden;width:100vw;height:100vh;">
 <style>
-    /* Основной контейнер-карточка (как на референсе) */
+    /* Основной контейнер-карточка */
     #${uid} {
         width: 100%;
         height: 100%;
@@ -417,7 +438,7 @@
         
         /* Стилизация карточки */
         background-color: #120C1C; 
-        border: 1px solid #3A2E59;
+        border: 1px solid ${bordColor}; /* Цвет от пользователя */
         border-radius: 20px;
         padding: 10px;
     }
