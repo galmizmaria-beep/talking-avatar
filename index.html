@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Аватар (Универсальный API)</title>
+    <title>AI Словарь-Аватар</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root { --bg: #120C1C; --surface: #1E1234; --primary: #A450F3; --accent: #F72585; --text: #EAE2FF; --border: #3A2E59; --input-bg: #0b0711; }
@@ -25,7 +25,7 @@
         
         .widget-wrapper { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; position: relative; }
         
-        /* Avatar UI Styles (Identical to injected code) */
+        /* Avatar UI Styles */
         .avatar-ring { width: 100px; height: 100px; border-radius: 50%; border: 3px solid var(--border); background: var(--bg); cursor: pointer; position: absolute; z-index: 10; display: flex; justify-content: center; align-items: center; transition: 0.3s; }
         .avatar-ring:hover { transform: scale(1.05); }
         .avatar-ring img { width: 90%; height: 90%; border-radius: 50%; object-fit: cover; }
@@ -62,14 +62,18 @@
         input[type="color"] { width: 100%; height: 40px; border: none; background: none; cursor: pointer; }
         
         .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; background: linear-gradient(90deg, #A450F3, #F72585); color: white; font-weight: 600; cursor: pointer; margin-top: 10px; }
-        textarea { width: 100%; height: 100px; background: #0b0711; border: 1px solid var(--border); color: #888; border-radius: 8px; padding: 10px; resize: none; }
-        .hint { font-size: 0.8rem; color: #aaa; margin-top: -10px; line-height: 1.4; }
+        
+        /* Dictionary Textarea */
+        textarea.dict-input { width: 100%; height: 200px; background: #0b0711; border: 1px solid var(--border); color: #fff; border-radius: 8px; padding: 10px; resize: vertical; font-family: monospace; white-space: pre; overflow: auto; }
+        textarea.code-output { width: 100%; height: 100px; background: #0b0711; border: 1px solid var(--border); color: #888; border-radius: 8px; padding: 10px; resize: none; font-size:11px;}
+        
+        .hint { font-size: 0.8rem; color: #aaa; margin-top: -5px; line-height: 1.4; }
     </style>
 </head>
 <body>
 
 <div id="editor-container">
-    <h1>🤖 Конструктор Умного Аватара</h1>
+    <h1>📚 Аватар-Словарь (Без API)</h1>
     <div class="editor-layout">
         <!-- Preview -->
         <div class="col" style="flex: 1.5;">
@@ -90,13 +94,13 @@
                         </div>
                         <div class="chat-messages" id="prev-msgs"></div>
                         <div class="chat-input-area">
-                            <input type="text" class="chat-input" id="prev-in" placeholder="Введите сообщение...">
+                            <input type="text" class="chat-input" id="prev-in" placeholder="Введите слово...">
                             <button class="send-btn" onclick="simSend()"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
                         </div>
                     </div>
                 </div>
             </div>
-            <p style="text-align:center; color:#888; font-size:0.9rem; margin-top:5px;">Нажмите на круг, чтобы проверить анимацию.</p>
+            <p style="text-align:center; color:#888; font-size:0.9rem; margin-top:5px;">Попробуйте написать слово из вашего словаря справа.</p>
         </div>
 
         <!-- Settings -->
@@ -106,27 +110,24 @@
                 <input type="file" id="inp-img" accept="image/*" class="file-input">
             </label>
 
-            <span style="font-weight:600">Ссылка на Webhook (Make/n8n/API):</span>
-            <input type="url" id="inp-api" placeholder="https://hook.eu1.make.com/...">
-            <div class="hint">
-                Вставьте сюда ссылку Webhook. Бот отправит JSON: <code>{"message": "вопрос"}</code>. 
-                Webhook должен вернуть JSON: <code>{"answer": "ответ"}</code> или просто текст.
-            </div>
-
-            <span style="font-weight:600">Язык / Подсказка:</span>
-            <select id="inp-lang">
-                <option value="ru">Русский</option>
-                <option value="en">English</option>
-            </select>
+            <span style="font-weight:600">База Знаний (Словарь):</span>
+            <div class="hint">Введите пары: <b>Слово - Значение</b> (каждое с новой строки).</div>
+            <textarea id="inp-dict" class="dict-input" placeholder="Привет - Здравствуй, ученик!
+Cat - Кот, домашнее животное.
+London - Capital of Great Britain.
+Формула - E = mc^2"></textarea>
+            
+            <span style="font-weight:600">Ответ, если слова нет в базе:</span>
+            <input type="text" id="inp-unknown" value="Я не знаю такого слова. Попробуй другое.">
 
             <span style="font-weight:600">Приветствие:</span>
-            <input type="text" id="inp-welcome" value="Привет! Спрашивай что угодно.">
+            <input type="text" id="inp-welcome" value="Привет! Напиши слово, и я дам определение.">
 
             <span style="font-weight:600">Цвет сообщений:</span>
             <input type="color" id="inp-accent" value="#F72585">
             
             <button id="btn-copy" class="btn">Скопировать код</button>
-            <textarea id="output-code" readonly placeholder="Здесь появится готовый код..."></textarea>
+            <textarea id="output-code" class="code-output" readonly placeholder="Здесь появится готовый код..."></textarea>
         </div>
     </div>
 </div>
@@ -145,8 +146,8 @@
         inp: document.getElementById('prev-in'),
         // Inputs
         file: document.getElementById('inp-img'),
-        api: document.getElementById('inp-api'),
-        lang: document.getElementById('inp-lang'),
+        dict: document.getElementById('inp-dict'),
+        unk: document.getElementById('inp-unknown'),
         wel: document.getElementById('inp-welcome'),
         acc: document.getElementById('inp-accent'),
         code: document.getElementById('output-code'),
@@ -159,6 +160,9 @@
     // Init
     els.imgRing.src = state.avatar;
     els.imgHead.src = state.avatar;
+    
+    // Default dictionary content
+    els.dict.value = "Привет - Здравствуй! Я готов помочь с определениями.\nApple - Яблоко, вкусный фрукт.\nGenially - Платформа для создания интерактивного контента.";
 
     // Handlers
     els.file.onchange = e => {
@@ -215,12 +219,36 @@
         if(state.open) addMsg('bot', els.wel.value);
     }
 
+    // Parse Dictionary
+    function parseDictionary() {
+        const lines = els.dict.value.split('\n');
+        const db = {};
+        lines.forEach(line => {
+            const parts = line.split('-');
+            if(parts.length >= 2) {
+                const key = parts[0].trim().toLowerCase();
+                const val = parts.slice(1).join('-').trim(); // Join back in case description has hyphens
+                if(key) db[key] = val;
+            }
+        });
+        return db;
+    }
+
+    // Simulation for Preview
     window.simSend = () => {
-        const val = els.inp.value;
+        const val = els.inp.value.trim();
         if(!val) return;
         addMsg('user', val);
         els.inp.value = '';
-        setTimeout(() => addMsg('bot', "Это предпросмотр. В реальном виджете здесь будет ответ от вашей Webhook ссылки."), 600);
+        
+        // Local logic
+        const db = parseDictionary();
+        const key = val.toLowerCase();
+        let answer = db[key];
+        
+        if(!answer) answer = els.unk.value;
+        
+        setTimeout(() => addMsg('bot', answer), 400);
     };
 
     // Live update
@@ -241,17 +269,15 @@
     };
 
     function getCode() {
-        const uid = "ai-" + Math.random().toString(36).substr(2,6);
+        const uid = "dict-" + Math.random().toString(36).substr(2,6);
         const av = state.isUser ? state.avatar : defBot;
         const us = defUser;
-        const api = els.api.value;
         const col = els.acc.value;
         const wel = els.wel.value;
-        const lan = els.lang.value;
+        const unk = els.unk.value;
         
-        const txt = lan === 'ru' 
-            ? { ph: "Сообщение...", err: "Ошибка связи с сервером. Проверьте Webhook." }
-            : { ph: "Type message...", err: "Connection error. Check Webhook." };
+        // Convert Textarea to JSON Object string
+        const dictObj = JSON.stringify(parseDictionary());
 
         return `
 <!DOCTYPE html>
@@ -289,12 +315,6 @@
 #${uid} input { flex:1; background:#0b0711; border:1px solid #3A2E59; border-radius:20px; padding:8px 12px; color:#fff; outline:none; }
 #${uid} .snd { width:34px; height:34px; border-radius:50%; background:${col}; border:none; color:#fff; cursor:pointer; display:flex; justify-content:center; align-items:center; }
 #${uid} .snd svg { width:16px; fill:white; margin-left:2px; }
-
-/* Loader */
-.dots { display:flex; gap:3px; padding:5px 8px !important; }
-.d { width:5px; height:5px; background:#aaa; border-radius:50%; animation:b 1.4s infinite; }
-.d:nth-child(2){animation-delay:0.2s} .d:nth-child(3){animation-delay:0.4s}
-@keyframes b {0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
 </style>
 
 <div id="${uid}">
@@ -306,7 +326,7 @@
         </div>
         <div class="logs" id="l-${uid}"></div>
         <div class="inp">
-            <input type="text" id="i-${uid}" placeholder="${txt.ph}">
+            <input type="text" id="i-${uid}" placeholder="Напиши слово...">
             <button class="snd" id="s-${uid}"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
         </div>
     </div>
@@ -320,72 +340,44 @@
     var l = document.getElementById('l-${uid}');
     var i = document.getElementById('i-${uid}');
     var s = document.getElementById('s-${uid}');
-    var api = "${api}";
+    
+    // The Database
+    var db = ${dictObj};
     var start = false;
 
     // Open/Close
     r.onclick = function(){ w.classList.add('show'); r.style.opacity='0'; r.style.pointerEvents='none'; if(!start){ add('bot',"${wel}"); start=true; } };
     c.onclick = function(){ w.classList.remove('show'); r.style.opacity='1'; r.style.pointerEvents='all'; };
 
-    function add(who, msg, load) {
+    function add(who, msg) {
         var d = document.createElement('div'); d.className = 'row ' + who;
         var im = document.createElement('img'); im.className = 'av'; im.src = who==='bot'?"${av}":"${us}";
         var t = document.createElement('div'); t.className = 'txt';
-        if(load) { t.className += ' dots'; t.innerHTML = '<div class="d"></div><div class="d"></div><div class="d"></div>'; }
-        else { t.innerText = msg; }
+        t.innerText = msg;
         d.appendChild(im); d.appendChild(t);
         l.appendChild(d); l.scrollTop = l.scrollHeight;
-        return d;
     }
 
-    async function send() {
+    function send() {
         var v = i.value.trim();
         if(!v) return;
         add('usr', v);
         i.value = '';
-        var load = add('bot', '', true);
-
-        if(!api) {
-            setTimeout(function(){ l.removeChild(load); add('bot', "Демо режим. Вставьте ссылку API в редакторе!"); }, 1000);
-            return;
+        
+        // Search logic
+        var key = v.toLowerCase();
+        var ans = db[key];
+        
+        // Fuzzy search fallback (if exact match not found)
+        if(!ans) {
+            // Check if user input is contained in any key
+            var found = Object.keys(db).find(k => k.includes(key) || key.includes(k));
+            if(found) ans = db[found];
         }
 
-        try {
-            // UNIVERSAL FETCH ATTEMPT
-            var res = await fetch(api, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: v, question: v, text: v }) // Send keys for everyone
-            });
+        if(!ans) ans = "${unk}";
 
-            if(!res.ok) throw new Error(res.status);
-
-            var data = await res.text();
-            var ans = "";
-
-            // Try parsing JSON
-            try {
-                var json = JSON.parse(data);
-                // Smart search for answer field
-                ans = json.answer || json.reply || json.output || json.text || json.content || json.message;
-                // If not found standard keys, look for first string value
-                if(!ans) {
-                     var vals = Object.values(json);
-                     for(var k=0; k<vals.length; k++) if(typeof vals[k] === 'string') { ans = vals[k]; break; }
-                }
-                if(!ans) ans = JSON.stringify(json);
-            } catch(e) {
-                ans = data; // Pure text response
-            }
-
-            l.removeChild(load);
-            add('bot', ans);
-
-        } catch(err) {
-            l.removeChild(load);
-            console.error(err);
-            add('bot', "${txt.err} (" + err.message + ")");
-        }
+        setTimeout(function(){ add('bot', ans); }, 300);
     }
 
     s.onclick = send;
@@ -398,7 +390,16 @@
 </script>
 </body>
 </html>
-     
+      
+        
+       
+   
+          
+        
+        
+
+
+            
             
             
         
