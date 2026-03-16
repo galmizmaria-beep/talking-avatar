@@ -188,8 +188,6 @@
 <audio id="prev-aud-click"></audio>
 <audio id="prev-aud-ping"></audio>
 <audio id="prev-aud-type"></audio>
-<audio id="prev-aud-correct"></audio>
-<audio id="prev-aud-wrong"></audio>
 
 <script>
     // --- DATA & STATE ---
@@ -215,17 +213,7 @@
         },
         en: {
             title: "Talking Avatar: Quiz Builder",
-            s1: "1. Language & Avatar", s2: "2. Timer", s3: "3. Questions", s4: "4. Final Messages",
-            col: "Color:", up: "📂 Upload Avatar", done: "✅ Uploaded",
-            tmr: "Enable", min: "min.",
-            add: "+ Add Question", 
-            lblWinAll: "All correct (100%):", lblWinHalf: "More than half (>50%):", lblLose: "Half or less (<=50%):",
-            btn: "Copy Code", copied: "✅ Copied!", hint: "Click the circle to test.",
-            qType: "Question Type:", qText: "✍️ Text", qChoice: "🔘 Choice", qQ: "Question Text:",
-            qOpts: "Options (comma separated):", qAns: "Correct Answer:", 
-            mImg: "Photo", mImgOk: "Has Photo", mAud: "Audio", mAudOk: "Has Audio",
-            wName: "Avatar", wPh: "Your answer...",
-            wWinAll: "You're a genius!", wWinHalf: "Good, but you can do better!", wLose: "Oops... try again!",
+            s1:            wWinAll: "You're a genius!", wWinHalf: "Good, but you can do better!", wLose: "Oops... try again!",
             resText: "🏆 Result:\n✅ Correct: {c}\n❌ Incorrect: {w}"
         }
     };
@@ -234,9 +222,6 @@
     const sType = "data:audio/wav;base64,UklGRi4AAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAACAgEBAQAAAA=="; 
     const sClick = "data:audio/wav;base64,UklGRjIAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoAAACAAAAAgAAAAAA="; 
     const sPing = "data:audio/mp3;base64,//uQZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWgAAAA0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABMmYXbWxpbmUAbXAzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq"; 
-    // Small success and error tones
-    const sCorrect = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQAEABAAZGF0YQQAAAD//wAA//8=";
-    const sWrong = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQQAAADq6urq6uo=";
 
     let state = {
         lang: 'ru',
@@ -277,13 +262,10 @@
         label: document.getElementById('label-img'),
         auType: document.getElementById('prev-aud-type'),
         auClick: document.getElementById('prev-aud-click'),
-        auPing: document.getElementById('prev-aud-ping'),
-        auCorrect: document.getElementById('prev-aud-correct'),
-        auWrong: document.getElementById('prev-aud-wrong')
+        auPing: document.getElementById('prev-aud-ping')
     };
 
     els.auType.src = sType; els.auClick.src = sClick; els.auPing.src = sPing;
-    els.auCorrect.src = sCorrect; els.auWrong.src = sWrong;
 
     // --- LANGUAGE LOGIC ---
     window.changeLang = () => {
@@ -415,13 +397,39 @@
     els.prevHead.src = state.avatar;
 
     // --- PREVIEW LOGIC ---
+    let synthCtx = null;
+    function playSynth(isCor) {
+        try {
+            if(!synthCtx) synthCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if(synthCtx.state === 'suspended') synthCtx.resume();
+            const osc = synthCtx.createOscillator(), gain = synthCtx.createGain();
+            osc.connect(gain); gain.connect(synthCtx.destination);
+            if(isCor) {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25, synthCtx.currentTime); // Нота До
+                osc.frequency.setValueAtTime(659.25, synthCtx.currentTime + 0.1); // Нота Ми
+                gain.gain.setValueAtTime(0.5, synthCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, synthCtx.currentTime + 0.4);
+                osc.start(); osc.stop(synthCtx.currentTime + 0.4);
+            } else {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, synthCtx.currentTime); // Низкий звук
+                osc.frequency.linearRampToValueAtTime(100, synthCtx.currentTime + 0.3);
+                gain.gain.setValueAtTime(0.3, synthCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, synthCtx.currentTime + 0.3);
+                osc.start(); osc.stop(synthCtx.currentTime + 0.3);
+            }
+        } catch(e) {}
+    }
+
     function playPrevSound(type) {
+        if (type === 'correct') return playSynth(true);
+        if (type === 'wrong') return playSynth(false);
+        
         let a;
         if (type === 'click') a = els.auClick;
         else if (type === 'ping') a = els.auPing;
         else if (type === 'type') a = els.auType;
-        else if (type === 'correct') a = els.auCorrect;
-        else if (type === 'wrong') a = els.auWrong;
         if(a) { a.currentTime = 0; a.play().catch(e=>{}); }
     }
 
@@ -589,7 +597,7 @@
             time: parseInt(els.tmrMin.value) * 60,
             winAll: els.msgWinAll.value, winHalf: els.msgWinHalf.value, lose: els.msgLose.value,
             resTxt: t.resText,
-            sClick: sClick, sPing: sPing, sType: sType, sCorrect: sCorrect, sWrong: sWrong,
+            sClick: sClick, sPing: sPing, sType: sType,
             uiName: t.wName, uiPh: t.wPh
         };
 
@@ -655,8 +663,6 @@
     <audio id="sC-${uid}" src="${data.sClick}"></audio>
     <audio id="sP-${uid}" src="${data.sPing}"></audio>
     <audio id="sT-${uid}" src="${data.sType}"></audio>
-    <audio id="sY-${uid}" src="${data.sCorrect}"></audio>
-    <audio id="sN-${uid}" src="${data.sWrong}"></audio>
 </div>
 
 <script>
@@ -666,17 +672,42 @@
     var l=document.getElementById('l-${uid}'), ia=document.getElementById('ia-${uid}'), i=document.getElementById('i-${uid}');
     var s=document.getElementById('s-${uid}'), td=document.getElementById('t-${uid}');
     var aC=document.getElementById('sC-${uid}'), aP=document.getElementById('sP-${uid}'), aT=document.getElementById('sT-${uid}');
-    var aY=document.getElementById('sY-${uid}'), aN=document.getElementById('sN-${uid}');
     
     var idx=0, act=false, iv=null, rem=0, corCnt=0, wrCnt=0;
+    var synthCtx = null;
+
+    function playSynth(isCor) {
+        try {
+            if(!synthCtx) synthCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if(synthCtx.state === 'suspended') synthCtx.resume();
+            var osc = synthCtx.createOscillator(), gain = synthCtx.createGain();
+            osc.connect(gain); gain.connect(synthCtx.destination);
+            if(isCor) {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25, synthCtx.currentTime);
+                osc.frequency.setValueAtTime(659.25, synthCtx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.5, synthCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, synthCtx.currentTime + 0.4);
+                osc.start(); osc.stop(synthCtx.currentTime + 0.4);
+            } else {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, synthCtx.currentTime);
+                osc.frequency.linearRampToValueAtTime(100, synthCtx.currentTime + 0.3);
+                gain.gain.setValueAtTime(0.3, synthCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, synthCtx.currentTime + 0.3);
+                osc.start(); osc.stop(synthCtx.currentTime + 0.3);
+            }
+        } catch(e) {}
+    }
 
     r.onclick = function(){ w.classList.add('show'); r.style.opacity='0'; r.style.pointerEvents='none'; snd('click'); if(!act) start(); };
     c.onclick = function(){ w.classList.remove('show'); r.style.opacity='1'; r.style.pointerEvents='all'; clearInterval(iv); };
     
     function snd(t){ 
+        if(t==='correct') return playSynth(true);
+        if(t==='wrong') return playSynth(false);
         var x;
         if(t==='click') x=aC; else if(t==='ping') x=aP; else if(t==='type') x=aT;
-        else if(t==='correct') x=aY; else if(t==='wrong') x=aN;
         if(x){ x.currentTime=0; x.play().catch(function(){}); }
     }
 
